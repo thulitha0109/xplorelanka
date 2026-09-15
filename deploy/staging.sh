@@ -16,7 +16,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # CONFIG — edit these to match your staging environment
 # ---------------------------------------------------------------------------
-APP_DIR="/home/thulitha/xplorelanka-staging"   # Deployment directory on server
+APP_DIR="/home/thulitha/docker/xplorelanka"    # Deployment directory on server
 COMPOSE_FILE="docker-compose.staging.yml"
 APP_CONTAINER="xplorelanka_staging_app"
 DB_CONTAINER="xplorelanka_staging_db"
