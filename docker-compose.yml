@@ -1,0 +1,115 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: xplorelanka_app
+    restart: unless-stopped
+    working_dir: /var/www
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - ./:/var/www
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka
+
+  db:
+    image: postgres:15-alpine
+    container_name: xplorelanka_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-xplorelanka}
+      POSTGRES_USER: ${DB_USERNAME:-xplorelanka}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - xplorelanka_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - xplorelanka
+
+  redis:
+    image: redis:alpine
+    container_name: xplorelanka_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - xplorelanka_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - xplorelanka
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: xplorelanka_worker
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work redis --sleep=3 --tries=3
+    volumes:
+      - ./:/var/www
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: xplorelanka_scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan schedule:work
+    volumes:
+      - ./:/var/www
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka
+
+networks:
+  xplorelanka:
+    driver: bridge
+
+volumes:
+  xplorelanka_db_data:
+  xplorelanka_redis_data:
+
