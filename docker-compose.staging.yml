@@ -1,0 +1,133 @@
+# =============================================================================
+# Xplorelanka – Staging Docker Compose
+# =============================================================================
+# Mirrors production architecture but with:
+#   - Debug mode enabled
+#   - Exposed DB/Redis ports for inspection
+#   - Dev-friendly logging levels
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/prod/Dockerfile   # Uses same prod Dockerfile — parity!
+    container_name: xplorelanka_staging_app
+    restart: unless-stopped
+    environment:
+      APP_ENV: staging
+      APP_DEBUG: "true"
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:9001:9000"             # FPM — proxied by nginx below
+    volumes:
+      - xplorelanka_staging_storage:/var/www/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka_staging
+
+  web:
+    image: nginx:alpine
+    container_name: xplorelanka_staging_web
+    restart: unless-stopped
+    ports:
+      - "8080:80"                          # Accessible on :8080 (no SSL on staging)
+    volumes:
+      - ./docker/prod/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - xplorelanka_staging_storage:/var/www/storage:ro
+    depends_on:
+      - app
+    networks:
+      - xplorelanka_staging
+
+  db:
+    image: postgres:15-alpine
+    container_name: xplorelanka_staging_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-xplorelanka_staging}
+      POSTGRES_USER: ${DB_USERNAME:-xplorelanka}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5433:5432"             # Exposed for local inspection
+    volumes:
+      - xplorelanka_staging_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka_staging}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - xplorelanka_staging
+
+  redis:
+    image: redis:alpine
+    container_name: xplorelanka_staging_redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6380:6379"             # Exposed for local inspection
+    volumes:
+      - xplorelanka_staging_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - xplorelanka_staging
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/prod/Dockerfile
+    container_name: xplorelanka_staging_worker
+    restart: unless-stopped
+    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=90
+    env_file:
+      - .env
+    volumes:
+      - xplorelanka_staging_storage:/var/www/storage
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka_staging
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/prod/Dockerfile
+    container_name: xplorelanka_staging_scheduler
+    restart: unless-stopped
+    command: php artisan schedule:work
+    env_file:
+      - .env
+    volumes:
+      - xplorelanka_staging_storage:/var/www/storage
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka_staging
+
+networks:
+  xplorelanka_staging:
+    driver: bridge
+
+volumes:
+  xplorelanka_staging_db:
+  xplorelanka_staging_redis:
+  xplorelanka_staging_storage:
