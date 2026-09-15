@@ -1,120 +1,252 @@
 # =============================================================================
-# Xplorelanka – Staging Docker Compose
+# Xplorelanka – STAGING Docker Compose
 # =============================================================================
-# Mirrors production architecture but with:
-#   - Debug mode enabled
-#   - Exposed DB/Redis ports for inspection
-#   - Dev-friendly logging levels
+# Staging environment
+#
+# Architecture:
+#   app        → PHP-FPM / Laravel
+#   worker     → Laravel queue worker
+#   scheduler  → Laravel scheduler
+#   db         → PostgreSQL 15
+#   redis      → Redis
+#
+# Internal service names:
+#   PostgreSQL → db:5432
+#   Redis      → redis:6379
+#
+# External inspection:
+#   PHP-FPM    → 127.0.0.1:9001
+#   PostgreSQL → 127.0.0.1:5433
+#   Redis      → 127.0.0.1:6380
 # =============================================================================
 
 services:
+
+  # ---------------------------------------------------------------------------
+  # Laravel Application
+  # ---------------------------------------------------------------------------
   app:
     build:
       context: .
-      dockerfile: docker/prod/Dockerfile   # Uses same prod Dockerfile — parity!
+      dockerfile: docker/prod/Dockerfile
+
     container_name: xplorelanka_staging_app
+
     restart: unless-stopped
+
     environment:
       APP_ENV: staging
       APP_DEBUG: "true"
+
     env_file:
       - .env
+
     ports:
-      - "127.0.0.1:9001:9000"             # PHP-FPM — point your external proxy here
+      - "127.0.0.1:9001:9000"
+
     volumes:
       - xplorelanka_staging_storage:/var/www/storage
+
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+
     networks:
       - xplorelanka_staging
 
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
   db:
     image: postgres:15-alpine
+
     container_name: xplorelanka_staging_db
+
     restart: unless-stopped
+
     environment:
       POSTGRES_DB: ${DB_DATABASE:-xplorelanka_staging}
       POSTGRES_USER: ${DB_USERNAME:-xplorelanka}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+
     ports:
-      - "127.0.0.1:5433:5432"             # Exposed for local inspection
+      - "127.0.0.1:5433:5432"
+
     volumes:
       - xplorelanka_staging_db:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka_staging}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka_staging}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+    networks:
+      xplorelanka_staging:
+        aliases:
+          - db
+
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+
+    container_name: xplorelanka_staging_redis
+
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:6380:6379"
+
+    volumes:
+      - xplorelanka_staging_redis:/data
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
-    networks:
-      - xplorelanka_staging
+      start_period: 5s
 
-  redis:
-    image: redis:alpine
-    container_name: xplorelanka_staging_redis
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:6380:6379"             # Exposed for local inspection
-    volumes:
-      - xplorelanka_staging_redis:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     networks:
-      - xplorelanka_staging
+      xplorelanka_staging:
+        aliases:
+          - redis
 
+
+  # ---------------------------------------------------------------------------
+  # Queue Worker
+  # ---------------------------------------------------------------------------
   worker:
     build:
       context: .
       dockerfile: docker/prod/Dockerfile
+
     container_name: xplorelanka_staging_worker
+
     restart: unless-stopped
-    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=90
+
+    command:
+      [
+        "php",
+        "artisan",
+        "queue:work",
+        "redis",
+        "--sleep=3",
+        "--tries=3",
+        "--timeout=90"
+      ]
+
+    environment:
+      APP_ENV: staging
+      APP_DEBUG: "true"
+
     env_file:
       - .env
+
     volumes:
       - xplorelanka_staging_storage:/var/www/storage
+
     depends_on:
-      app:
-        condition: service_started
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      app:
+        condition: service_healthy
+
     networks:
       - xplorelanka_staging
 
+
+  # ---------------------------------------------------------------------------
+  # Laravel Scheduler
+  # ---------------------------------------------------------------------------
   scheduler:
     build:
       context: .
       dockerfile: docker/prod/Dockerfile
+
     container_name: xplorelanka_staging_scheduler
+
     restart: unless-stopped
-    command: php artisan schedule:work
+
+    command:
+      [
+        "php",
+        "artisan",
+        "schedule:work"
+      ]
+
+    environment:
+      APP_ENV: staging
+      APP_DEBUG: "true"
+
     env_file:
       - .env
+
     volumes:
       - xplorelanka_staging_storage:/var/www/storage
+
     depends_on:
-      app:
-        condition: service_started
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      app:
+        condition: service_healthy
+
     networks:
       - xplorelanka_staging
 
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+
 networks:
   xplorelanka_staging:
+    name: xplorelanka_staging
     driver: bridge
 
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+
 volumes:
+
   xplorelanka_staging_db:
+    name: xplorelanka_staging_db
+
   xplorelanka_staging_redis:
+    name: xplorelanka_staging_redis
+
   xplorelanka_staging_storage:
+    name: xplorelanka_staging_storage
