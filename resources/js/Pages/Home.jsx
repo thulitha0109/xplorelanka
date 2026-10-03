@@ -511,46 +511,6 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
                                 <ArrowRight className="w-4 h-4" />
                             </Link>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            {[
-                                { name: 'AC Sedan Car', icon: Car, desc: '1-3 Passengers', rate: 'From Rs. 110/km', badge: 'Couples & Solos', image: 'https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=900&q=80' },
-                                { name: 'Luxury 4x4 SUV', icon: ShieldCheck, desc: '1-4 Passengers', rate: 'From Rs. 185/km', badge: 'Hill Country & VIP', image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80' },
-                                { name: 'Passenger Van', icon: Users, desc: '4-9 Passengers', rate: 'From Rs. 140/km', badge: 'Families & Groups', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=900&q=80' },
-                                { name: 'Safari 4x4 Jeep', icon: Compass, desc: '1-6 Passengers', rate: 'Fixed Safari Day Rates', badge: 'Yala & Udawalawe', image: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=900&q=80' },
-                                { name: 'Mini Coach Bus', icon: Bus, desc: '10-22 Passengers', rate: 'From Rs. 240/km', badge: 'Delegations', image: 'https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?auto=format&fit=crop&w=900&q=80' },
-                                { name: 'Tuk-Tuk Safari', icon: Zap, desc: '1-2 Passengers', rate: 'From Rs. 80/km', badge: 'Iconic Local Tour', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=900&q=80' },
-                            ].map((v, i) => {
-                                const IconComponent = v.icon;
-                                return (
-                                    <Link
-                                        key={i}
-                                        href="/vehicles"
-                                        className="bg-white rounded-2xl border border-slate-200 hover:border-emerald-500 hover:shadow-lg transition-all group flex flex-col justify-between overflow-hidden"
-                                    >
-                                        <div className="relative h-28 overflow-hidden border-b border-slate-100">
-                                            <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
-                                            <div className="absolute top-3 left-3 w-10 h-10 rounded-xl bg-white/90 text-emerald-700 shadow-sm flex items-center justify-center">
-                                                <IconComponent className="w-5 h-5" />
-                                            </div>
-                                        </div>
-                                        <div className="p-5 flex flex-col justify-between space-y-4 h-full">
-                                            <div>
-                                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md inline-block mb-2">
-                                                    {v.badge}
-                                                </span>
-                                                <h4 className="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition-colors">{v.name}</h4>
-                                                <p className="text-xs text-slate-500 mt-1">{v.desc}</p>
-                                            </div>
-                                            <div className="pt-2 border-t border-slate-100 text-xs font-bold text-slate-800">
-                                                {v.rate}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
-                        </div>
                     </div>
                 </section>
 
