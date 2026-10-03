@@ -13,7 +13,6 @@ export default function Navbar({ currentPath = '/' }) {
     const navLinks = [
         { name: 'Home', href: '/' },
         { name: 'Tours', href: '/tours' },
-        { name: 'Camping', href: '/camping' },
         { name: 'Accommodations', href: '/accommodations' },
         { name: 'Vehicles & Transfers', href: '/vehicles' },
         { name: 'Trip Planner', href: '/planner' },
@@ -59,9 +58,6 @@ export default function Navbar({ currentPath = '/' }) {
             <div className="container mx-auto px-4">
                 <div className="flex h-16 items-center justify-between">
                     <Link href="/" className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
-                            <Compass className="w-5 h-5 text-slate-950" />
-                        </div>
                         <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
                             XPLOR <span className="text-amber-500">LANKA</span>
                         </span>

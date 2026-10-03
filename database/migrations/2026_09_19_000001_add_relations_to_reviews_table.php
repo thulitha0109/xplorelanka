@@ -1,0 +1,25 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('reviews', function (Blueprint $table) {
+            $table->foreignId('accommodation_id')->nullable()->constrained('accommodations')->nullOnDelete()->after('tour_id');
+            $table->foreignId('vehicle_id')->nullable()->constrained('vehicles')->nullOnDelete()->after('accommodation_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('reviews', function (Blueprint $table) {
+            $table->dropForeign(['accommodation_id']);
+            $table->dropForeign(['vehicle_id']);
+            $table->dropColumn(['accommodation_id', 'vehicle_id']);
+        });
+    }
+};

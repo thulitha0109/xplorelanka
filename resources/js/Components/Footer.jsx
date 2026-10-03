@@ -13,7 +13,7 @@ export default function Footer() {
                             XPLOR <span className="text-amber-500">LANKA</span>
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                            Personalized Sri Lanka tour packages, authentic wilderness camping, private vehicle hires, and curated eco stays across Sri Lanka.
+                            Personalized Sri Lanka tour packages, private vehicle hires, and curated eco stays across Sri Lanka.
                         </p>
                         <div className="flex space-x-3">
                             <a href="https://www.facebook.com/xplorelanka" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors">
@@ -33,10 +33,10 @@ export default function Footer() {
                         <h4 className="text-white font-bold text-lg mb-4">Quick Links</h4>
                         <ul className="space-y-2.5 text-sm">
                             <li><Link href="/tours" className="hover:text-amber-400 transition-colors">Sri Lanka Tours</Link></li>
-                            <li><Link href="/camping" className="hover:text-amber-400 transition-colors">Camping Experiences</Link></li>
                             <li><Link href="/accommodations" className="hover:text-amber-400 transition-colors">Eco Lodges & Cabins</Link></li>
                             <li><Link href="/vehicles" className="hover:text-amber-400 transition-colors">Vehicle Fleet & Transfers</Link></li>
                             <li><Link href="/planner" className="hover:text-amber-400 transition-colors">Custom Trip Planner</Link></li>
+                            <li><Link href="/blog" className="hover:text-amber-400 transition-colors">Travel Blog & Guides</Link></li>
                             <li><Link href="/partner" className="hover:text-amber-400 transition-colors">Driver & Hotelier Partner Portal</Link></li>
                         </ul>
                     </div>
@@ -48,7 +48,7 @@ export default function Footer() {
                             <li><Link href="/tours?category=cultural" className="hover:text-amber-400 transition-colors">Cultural Triangle & Heritage</Link></li>
                             <li><Link href="/tours?category=nature" className="hover:text-amber-400 transition-colors">Hill Country Ceylon Tea Trails</Link></li>
                             <li><Link href="/tours?category=wildlife" className="hover:text-amber-400 transition-colors">Yala & Udawalawe Safaris</Link></li>
-                            <li><Link href="/camping" className="hover:text-amber-400 transition-colors">Knuckles Wilderness Camping</Link></li>
+                            <li><Link href="/tours?category=beach" className="hover:text-amber-400 transition-colors">Golden Beaches & Surfing</Link></li>
                             <li><Link href="/vehicles" className="hover:text-amber-400 transition-colors">Airport Pickups & Transfers</Link></li>
                         </ul>
                     </div>
@@ -90,7 +90,7 @@ export default function Footer() {
                             <span className="w-4 h-4 rounded bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black text-[9px] flex items-center justify-center shadow group-hover:scale-105 transition-transform">
                                 ILU
                             </span>
-                            <span className="font-semibold text-xs tracking-tight">Ilu Technologies</span>
+                            <span className="font-semibold text-xs tracking-tight">Ilu</span>
                         </a>
                     </div>
                 </div>

@@ -124,27 +124,46 @@ export default function UserDashboard({ user, bookings = [], reviews = [] }) {
                         {reviews.length > 0 ? (
                             <div className="space-y-4">
                                 {reviews.map(review => (
-                                    <div key={review.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative">
+                                    <div key={review.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative space-y-2">
                                         {!review.is_approved && (
                                             <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded-bl-xl rounded-tr-2xl">
                                                 Pending Approval
                                             </div>
                                         )}
                                         {review.tour && (
-                                            <Link href={`/tours/${review.tour.id}#reviews`} className="text-xs font-bold text-slate-900 dark:text-white hover:text-amber-500 transition-colors flex items-center space-x-1 mb-2 truncate">
+                                            <Link href={`/tours/${review.tour.id}`} className="text-xs font-bold text-amber-500 hover:underline flex items-center space-x-1 truncate">
                                                 <ExternalLink className="w-3 h-3" />
-                                                <span className="truncate">{review.tour.title}</span>
+                                                <span className="truncate">Tour: {review.tour.title}</span>
                                             </Link>
                                         )}
-                                        <div className="flex space-x-0.5 mb-2">
+                                        {review.accommodation && (
+                                            <Link href={`/accommodations/${review.accommodation.id}`} className="text-xs font-bold text-emerald-500 hover:underline flex items-center space-x-1 truncate">
+                                                <ExternalLink className="w-3 h-3" />
+                                                <span className="truncate">Stay: {review.accommodation.name}</span>
+                                            </Link>
+                                        )}
+                                        {review.vehicle && (
+                                            <Link href="/vehicles" className="text-xs font-bold text-blue-500 hover:underline flex items-center space-x-1 truncate">
+                                                <ExternalLink className="w-3 h-3" />
+                                                <span className="truncate">Vehicle: {review.vehicle.name}</span>
+                                            </Link>
+                                        )}
+                                        <div className="flex space-x-0.5">
                                             {[1,2,3,4,5].map(s => (
                                                 <Star key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? 'fill-amber-500 text-amber-500' : 'text-slate-200 dark:text-slate-700'}`} />
                                             ))}
                                         </div>
-                                        {review.title && <h4 className="text-sm font-bold mb-1">{review.title}</h4>}
+                                        {review.title && <h4 className="text-sm font-bold text-slate-900 dark:text-white">{review.title}</h4>}
                                         <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3">"{review.comment}"</p>
-                                        <div className="mt-3 text-[10px] text-slate-400">
-                                            {new Date(review.created_at).toLocaleDateString()}
+                                        
+                                        <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">
+                                            <span>{new Date(review.created_at).toLocaleDateString()}</span>
+                                            <Link
+                                                href={`/reviews/${review.id}/edit`}
+                                                className="inline-flex items-center space-x-1 text-xs font-bold text-amber-500 hover:text-amber-600"
+                                            >
+                                                <span>Edit Review</span>
+                                            </Link>
                                         </div>
                                     </div>
                                 ))}

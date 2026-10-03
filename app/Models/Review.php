@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Review extends Model
 {
@@ -11,6 +12,8 @@ class Review extends Model
 
     protected $fillable = [
         'tour_id',
+        'accommodation_id',
+        'vehicle_id',
         'user_id',
         'customer_name',
         'customer_country',
@@ -19,6 +22,7 @@ class Review extends Model
         'comment',
         'media_urls',
         'is_approved',
+        'source_platform',
     ];
 
     protected $casts = [
@@ -27,12 +31,22 @@ class Review extends Model
         'rating'      => 'integer',
     ];
 
-    public function tour()
+    public function tour(): BelongsTo
     {
         return $this->belongsTo(Tour::class);
     }
 
-    public function user()
+    public function accommodation(): BelongsTo
+    {
+        return $this->belongsTo(Accommodation::class);
+    }
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

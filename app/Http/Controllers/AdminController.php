@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Accommodation;
+use App\Models\BlogPost;
 use App\Models\Booking;
-use App\Models\CampingLocation;
 use App\Models\Partner;
 use App\Models\Review;
 use App\Models\Tour;
@@ -25,46 +25,48 @@ class AdminController extends Controller
         $totalAccommodations = Accommodation::count();
         $totalVehicles = Vehicle::count();
         $totalReviews = Review::count();
+        $totalBlogs = BlogPost::count();
 
         $recentBookings = Booking::with('tour')->latest()->take(15)->get();
         $allTours = Tour::latest()->get();
-        $allAccommodations = Accommodation::latest()->get();
-        $allVehicles = Vehicle::all();
-        $allPartners = Partner::latest()->get();
+        $allAccommodations = Accommodation::with('partner')->latest()->get();
+        $allVehicles = Vehicle::with('partner')->latest()->get();
+        $allPartners = Partner::withCount(['accommodations', 'vehicles'])->latest()->get();
         $allUsers = User::latest()->get();
-        $allReviews = Review::with('tour')->latest()->get();
-        $campingLocations = CampingLocation::all();
+        $allReviews = Review::with(['tour', 'accommodation', 'vehicle'])->latest()->get();
+        $allBlogs = BlogPost::latest()->get();
 
-        // Categorize partners for tour creation selection
-        $vehiclePartners = Partner::where('partner_type', 'vehicle_owner')->get();
-        $accommodationPartners = Partner::where('partner_type', 'accommodation_owner')->get();
+        // Categorize partners for dropdown selections
+        $vehiclePartners = Partner::whereIn('partner_type', ['vehicle_owner', 'driver'])->get();
+        $accommodationPartners = Partner::whereIn('partner_type', ['accommodation_owner', 'hotelier'])->get();
         $placePartners = Partner::where('partner_type', 'place_owner')->get();
         $guidePartners = Partner::where('partner_type', 'tour_guide')->get();
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
-                'totalUsers' => $totalUsers,
-                'totalTours' => $totalTours,
-                'totalBookings' => $totalBookings,
-                'pendingBookings' => $pendingBookings,
-                'totalPartners' => $totalPartners,
+                'totalUsers'          => $totalUsers,
+                'totalTours'          => $totalTours,
+                'totalBookings'       => $totalBookings,
+                'pendingBookings'     => $pendingBookings,
+                'totalPartners'       => $totalPartners,
                 'totalAccommodations' => $totalAccommodations,
-                'totalVehicles' => $totalVehicles,
-                'totalReviews' => $totalReviews,
+                'totalVehicles'       => $totalVehicles,
+                'totalReviews'        => $totalReviews,
+                'totalBlogs'          => $totalBlogs,
             ],
             'recentBookings' => $recentBookings,
-            'tours' => $allTours,
+            'tours'          => $allTours,
             'accommodations' => $allAccommodations,
-            'vehicles' => $allVehicles,
-            'partners' => $allPartners,
-            'users' => $allUsers,
-            'reviews' => $allReviews,
-            'campingLocations' => $campingLocations,
+            'vehicles'       => $allVehicles,
+            'partners'       => $allPartners,
+            'users'          => $allUsers,
+            'reviews'        => $allReviews,
+            'blogs'          => $allBlogs,
             'categorizedPartners' => [
-                'vehicles' => $vehiclePartners,
+                'vehicles'       => $vehiclePartners,
                 'accommodations' => $accommodationPartners,
-                'places' => $placePartners,
-                'guides' => $guidePartners,
+                'places'         => $placePartners,
+                'guides'         => $guidePartners,
             ],
         ]);
     }

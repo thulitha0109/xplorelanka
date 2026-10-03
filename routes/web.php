@@ -1,14 +1,18 @@
 <?php
 
+use App\Http\Controllers\AccommodationController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\PlannerController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\TourController;
+use App\Http\Controllers\VehicleController;
 use App\Models\Accommodation;
 use App\Models\BlogPost;
-use App\Models\CampingLocation;
 use App\Models\Review;
 use App\Models\Tour;
 use App\Models\User;
@@ -38,7 +42,7 @@ Route::middleware('auth')->group(function () {
         $bookings = \App\Models\Booking::where('customer_email', $user->email)
                         ->with('tour')->latest()->get();
         $reviews  = \App\Models\Review::where('user_id', $user->id)
-                        ->with('tour')->latest()->get();
+                        ->with(['tour', 'accommodation', 'vehicle'])->latest()->get();
         return Inertia::render('User/Dashboard', [
             'user'     => $user,
             'bookings' => $bookings,
@@ -46,8 +50,13 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('user.dashboard');
 
-    Route::get('/write-review/{tour_id}', [ReviewController::class, 'create'])->name('reviews.create');
+    Route::get('/write-review/{tour_id?}', [ReviewController::class, 'create'])->name('reviews.create');
+    Route::get('/reviews/{id}/edit',        [ReviewController::class, 'edit'])->name('reviews.edit');
+    Route::put('/reviews/{id}',             [ReviewController::class, 'update'])->name('reviews.update');
 });
+
+// ── Media Upload Endpoints (Device Uploads to MinIO / Storage) ─────────────────
+Route::post('/media/upload',       [MediaController::class, 'upload'])->name('media.upload');
 
 // ── Public Pages ───────────────────────────────────────────────────────────────
 Route::get('/', function () {
@@ -55,26 +64,24 @@ Route::get('/', function () {
     if ($featuredTours->isEmpty()) {
         $featuredTours = Tour::where('is_active', true)->take(4)->get();
     }
-    $campingLocations = CampingLocation::where('is_active', true)->take(4)->get();
-    $accommodations   = Accommodation::where('is_available', true)->take(3)->get();
-    $vehicles         = Vehicle::where('is_available', true)->get();
-    $reviews          = Review::with('tour')->where('is_approved', true)->latest()->take(8)->get();
+    $accommodations = Accommodation::with('partner')->where('is_available', true)->take(3)->get();
+    $vehicles       = Vehicle::with('partner')->where('is_available', true)->get();
+    $reviews        = Review::with(['tour', 'accommodation', 'vehicle'])->where('is_approved', true)->latest()->take(8)->get();
 
     return Inertia::render('Home', [
-        'featuredTours'    => $featuredTours,
-        'campingLocations' => $campingLocations,
-        'accommodations'   => $accommodations,
-        'vehicles'         => $vehicles,
-        'reviews'          => $reviews,
+        'featuredTours'  => $featuredTours,
+        'accommodations' => $accommodations,
+        'vehicles'       => $vehicles,
+        'reviews'        => $reviews,
     ]);
 })->name('home');
 
-Route::get('/tours', [TourController::class, 'index'])->name('tours.index');
-
+// Tours
+Route::get('/tours',      [TourController::class, 'index'])->name('tours.index');
 Route::get('/tours/{id}', function ($id) {
-    $tour        = Tour::findOrFail($id);
+    $tour         = Tour::findOrFail($id);
     $relatedTours = Tour::where('id', '!=', $id)->where('is_active', true)->take(3)->get();
-    $reviews     = Review::where('tour_id', $id)->where('is_approved', true)->latest()->get();
+    $reviews      = Review::where('tour_id', $id)->where('is_approved', true)->latest()->get();
 
     return Inertia::render('TourDetail', [
         'tour'         => $tour,
@@ -83,46 +90,30 @@ Route::get('/tours/{id}', function ($id) {
     ]);
 })->name('tours.show');
 
-Route::get('/camping', function () {
-    $locations = CampingLocation::where('is_active', true)->get();
-    return Inertia::render('Camping', ['campingLocations' => $locations]);
-})->name('camping');
+// Accommodations
+Route::get('/accommodations',      [AccommodationController::class, 'index'])->name('accommodations.index');
+Route::get('/accommodations/{id}', [AccommodationController::class, 'show'])->name('accommodations.show');
 
-Route::get('/accommodations', function () {
-    $accommodations = Accommodation::where('is_available', true)->get();
-    return Inertia::render('Accommodations', ['accommodations' => $accommodations]);
-})->name('accommodations');
+// Vehicles & Transfers
+Route::get('/vehicles',                 [VehicleController::class, 'index'])->name('vehicles.index');
+Route::post('/vehicles/estimate-quote', [VehicleController::class, 'estimateQuote'])->name('vehicles.estimate');
 
-Route::get('/vehicles', function () {
-    $vehicles = Vehicle::where('is_available', true)->get();
-    return Inertia::render('Vehicles', ['vehicles' => $vehicles]);
-})->name('vehicles');
+// Trip Planner (Connecting Tours, Vehicles, and Accommodations)
+Route::get('/planner',  [PlannerController::class, 'index'])->name('planner.index');
+Route::post('/planner', [PlannerController::class, 'store'])->name('planner.store');
 
-Route::get('/planner', function () {
-    $tours    = Tour::where('is_active', true)->get();
-    $vehicles = Vehicle::where('is_available', true)->get();
-    return Inertia::render('Planner', [
-        'tours'    => $tours,
-        'vehicles' => $vehicles,
-    ]);
-})->name('planner');
-
+// Partners
 Route::get('/partner', function () {
     return Inertia::render('Partner');
 })->name('partner');
 
-Route::get('/blog', function () {
-    $posts = BlogPost::where('is_published', true)->latest()->get();
-    return Inertia::render('Blog', ['posts' => $posts]);
-})->name('blog');
+// Blogs (Complete System)
+Route::get('/blog',        [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
-Route::get('/about', function () {
-    return Inertia::render('About');
-})->name('about');
-
-Route::get('/contact', function () {
-    return Inertia::render('Contact');
-})->name('contact');
+// Informational
+Route::get('/about',   function () { return Inertia::render('About'); })->name('about');
+Route::get('/contact', function () { return Inertia::render('Contact'); })->name('contact');
 
 // ── Public Form Submissions ────────────────────────────────────────────────────
 Route::post('/bookings',             [BookingController::class, 'store'])->name('bookings.store');
@@ -134,6 +125,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/',          [AdminController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'index']);
 
+    // Admin Media Upload
+    Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
+
     // Tour CRUD
     Route::get('/tours/create',    [TourController::class, 'create'])->name('tours.create');
     Route::get('/tours/{id}/edit', [TourController::class, 'edit'])->name('tours.edit');
@@ -141,18 +135,42 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/tours/{id}',      [TourController::class, 'update'])->name('tours.update');
     Route::delete('/tours/{id}',   [TourController::class, 'destroy'])->name('tours.destroy');
 
+    // Accommodations CRUD
+    Route::post('/accommodations',                  [AccommodationController::class, 'store'])->name('accommodations.store');
+    Route::put('/accommodations/{id}',              [AccommodationController::class, 'update'])->name('accommodations.update');
+    Route::put('/accommodations/{id}/availability', [AccommodationController::class, 'updateAvailability'])->name('accommodations.availability');
+    Route::delete('/accommodations/{id}',           [AccommodationController::class, 'destroy'])->name('accommodations.destroy');
+
+    // Vehicles CRUD
+    Route::post('/vehicles',                  [VehicleController::class, 'store'])->name('vehicles.store');
+    Route::put('/vehicles/{id}',              [VehicleController::class, 'update'])->name('vehicles.update');
+    Route::put('/vehicles/{id}/availability', [VehicleController::class, 'updateAvailability'])->name('vehicles.availability');
+    Route::delete('/vehicles/{id}',           [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
+    // Blogs CRUD
+    Route::post('/blogs',               [BlogController::class, 'store'])->name('blogs.store');
+    Route::put('/blogs/{id}',           [BlogController::class, 'update'])->name('blogs.update');
+    Route::put('/blogs/{id}/publish',   [BlogController::class, 'togglePublish'])->name('blogs.publish');
+    Route::delete('/blogs/{id}',        [BlogController::class, 'destroy'])->name('blogs.destroy');
+
     // Booking Management
     Route::put('/bookings/{id}/status', [BookingController::class, 'updateStatus'])->name('bookings.status');
     Route::delete('/bookings/{id}',     [BookingController::class, 'destroy'])->name('bookings.destroy');
 
     // Partner Management
-    Route::put('/partners/{id}/status', [PartnerController::class, 'updateStatus'])->name('partners.status');
+    Route::post('/partners',                            [PartnerController::class, 'adminStore'])->name('partners.store');
+    Route::post('/partners/from-user/{userId}',          [PartnerController::class, 'createFromUser'])->name('partners.fromUser');
+    Route::put('/partners/{id}',                        [PartnerController::class, 'update'])->name('partners.update');
+    Route::put('/partners/{id}/status',                 [PartnerController::class, 'updateStatus'])->name('partners.status');
+    Route::delete('/partners/{id}',                     [PartnerController::class, 'destroy'])->name('partners.destroy');
 
     // Users Management
     Route::put('/users/{id}/role', [AdminController::class, 'updateUserRole'])->name('users.role');
     Route::delete('/users/{id}',   [AdminController::class, 'destroyUser'])->name('users.destroy');
 
     // Reviews Management
+    Route::post('/reviews',            [ReviewController::class, 'adminStore'])->name('reviews.store');
+    Route::put('/reviews/{id}',        [ReviewController::class, 'adminUpdate'])->name('reviews.update');
     Route::put('/reviews/{id}/status', [ReviewController::class, 'updateStatus'])->name('reviews.status');
     Route::delete('/reviews/{id}',     [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });

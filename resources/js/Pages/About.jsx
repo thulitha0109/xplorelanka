@@ -15,7 +15,7 @@ export default function About() {
                     <span className="text-amber-500 font-bold text-sm tracking-wider uppercase">Our Story</span>
                     <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white">Connecting You to Authentic Sri Lanka</h1>
                     <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-                        Xplor Lanka is a premiere Sri Lankan travel agency headquartered in Kandy. We specialize in personalized itineraries, wilderness camping, chauffeur transfers, and authentic Ceylon hospitality.
+                        Xplor Lanka is a premiere Sri Lankan travel agency headquartered in Kandy. We specialize in personalized itineraries, boutique stays, chauffeur transfers, and authentic Ceylon hospitality.
                     </p>
                 </div>
 
@@ -35,7 +35,7 @@ export default function About() {
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center space-y-3 shadow-sm">
                         <Award className="w-10 h-10 text-amber-500 mx-auto" />
                         <h3 className="font-bold text-lg text-slate-900 dark:text-white">Top Guest Reviews</h3>
-                        <p className="text-xs text-slate-500">Over 1,000 satisfied global travelers rating us 4.9★ across tours and camping trips.</p>
+                        <p className="text-xs text-slate-500">Over 1,000 satisfied global travelers rating us 4.9★ across custom tours and transfers.</p>
                     </div>
                 </div>
             </main>

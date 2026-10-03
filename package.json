@@ -4,7 +4,10 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "dev:build": "./dev-build.sh",
+        "dev:fresh": "./dev-build.sh --fresh",
+        "dev:watch": "./dev-build.sh --watch"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
