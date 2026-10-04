@@ -7,7 +7,7 @@ services:
         UID: 1000
         GID: 1000
     container_name: xplorelanka_app
-    restart: unless-stopped
+    restart: "no"
     working_dir: /var/www
     ports:
       - "8000:8000"
@@ -21,7 +21,7 @@ services:
       AWS_BUCKET: ${AWS_BUCKET:-xplorelanka}
     volumes:
       - ./:/var/www
-    command: ["sh", "-lc", "php docker/dev/init-minio.php && exec php artisan serve --host=0.0.0.0 --port=8000"]
+    command: ["sh", "-lc", "if [ ! -f vendor/autoload.php ]; then echo \"Composer dependencies missing; run: docker compose run --rm --no-deps app composer install\" >&2; exit 1; fi; php docker/dev/init-minio.php && exec php artisan serve --host=0.0.0.0 --port=8000"]
     depends_on:
       db:
         condition: service_healthy

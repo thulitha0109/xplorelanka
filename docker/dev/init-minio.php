@@ -1,6 +1,12 @@
 <?php
 
-require dirname(__DIR__, 2).'/vendor/autoload.php';
+$autoload = dirname(__DIR__, 2).'/vendor/autoload.php';
+if (!is_file($autoload)) {
+    fwrite(STDERR, "Composer dependencies are not installed; skipping MinIO initialization. Run 'docker compose run --rm --no-deps app composer install', then restart the app.\n");
+    exit(0);
+}
+
+require $autoload;
 
 use Aws\S3\S3Client;
 
