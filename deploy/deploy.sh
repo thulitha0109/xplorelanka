@@ -84,7 +84,17 @@ flock -n 9 || fail "Another $ENVIRONMENT deployment is already running."
 
 cd "$APP_DIR"
 if [[ -n "$(git status --porcelain)" ]]; then
-    fail 'Working-tree changes are present; deploy from a clean, committed checkout.'
+    printf 'Working-tree changes detected in %s:\n' "$APP_DIR" >&2
+    git status --short >&2
+    cat >&2 <<'DIRTY_TREE_HELP'
+Review those paths on the server before deploying. Commit/push intentional code
+changes, or restore/remove only changes you have verified are disposable. Do not
+run `git reset --hard` blindly: it can permanently delete server-side changes.
+
+Then deploy with `./deploy/prod.sh` (or `./deploy/staging.sh`). To invoke this
+shared script directly, pass the environment: `./deploy/deploy.sh production`.
+DIRTY_TREE_HELP
+    exit 1
 fi
 PREVIOUS_COMMIT=$(git rev-parse HEAD)
 PREVIOUS_TAG=$(cat ".deploy-tag-$ENVIRONMENT" 2>/dev/null || true)
