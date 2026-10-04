@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import { formatAmount, formatProductPrice, getPriceAmount } from '../lib/currency';
+import SeoHead from '../Components/SeoHead';
 import { 
     Compass, Calendar, Users, MapPin, CheckCircle2, 
     MessageCircle, Sparkles, Car, Building2, ChevronRight, Check, ArrowRight, Star
 } from 'lucide-react';
 
 export default function Planner({ tours = [], vehicles = [], accommodations = [] }) {
-    const { flash } = usePage().props;
+    const { flash, currency } = usePage().props;
+    const currencyCode = currency?.code || 'USD';
     const [step, setStep] = useState(1); // 1: Route/Tour, 2: Vehicle, 3: Stay, 4: Summary/Contact
 
     // Selection states
@@ -37,12 +40,12 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
     const selectedAccommodation = accommodations.find(a => a.id === selectedAccId) || accommodations[0];
 
     // Calculate dynamic estimate
-    const tourCost = selectedTour ? Number(selectedTour.price_lkr) : 0;
-    const vehicleRate = selectedVehicle?.rate_per_km ? parseInt(selectedVehicle.rate_per_km.replace(/[^0-9]/g, '')) || 120 : 120;
-    const vehicleEst = selectedTour ? 0 : (days * (selectedVehicle?.daily_rate_lkr ? Number(selectedVehicle.daily_rate_lkr) : (vehicleRate * 80)));
-    const stayEst = selectedTour ? 0 : (days * (selectedAccommodation?.price_lkr ? Number(selectedAccommodation.price_lkr) : 18000));
+    const tourCost = selectedTour ? (getPriceAmount(selectedTour, currencyCode, 'package') || 0) : 0;
+    const vehicleEst = selectedTour ? 0 : (days * (getPriceAmount(selectedVehicle, currencyCode, 'day') || 0));
+    const stayNights = Math.max(days - 1, 1);
+    const stayEst = selectedTour ? 0 : (stayNights * (getPriceAmount(selectedAccommodation, currencyCode, 'night') || 0));
     
-    const combinedEstimate = selectedTour ? tourCost : (vehicleEst + stayEst + (selectedPlaces.length * 5000));
+    const combinedEstimate = selectedTour ? tourCost : (vehicleEst + stayEst);
 
     const { data, setData, post, processing, reset } = useForm({
         customer_name: '',
@@ -80,7 +83,11 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans">
-            <Head title="Custom Sri Lanka Trip Planner - Xplor Lanka" />
+            <SeoHead
+                title="Plan a Custom Sri Lanka Trip | Xplore Lanka"
+                description="Build a tailored Sri Lanka itinerary by combining local tour packages, private vehicles, places to visit and accommodation options. Request a custom quote."
+                schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'Custom Sri Lanka Trip Planning', provider: { '@id': 'https://xplorelanka.com/#organization' }, areaServed: { '@type': 'Country', name: 'Sri Lanka' } }}
+            />
             <Navbar currentPath="/planner" />
 
             {flash?.success && (
@@ -171,7 +178,7 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="font-bold text-sm text-slate-900 dark:text-white truncate">{t.title}</div>
-                                                <span className="text-xs font-black text-amber-500">LKR {Number(t.price_lkr).toLocaleString()}</span>
+                                                <span className="text-xs font-black text-amber-500">{formatProductPrice(t, currencyCode, 'package')}</span>
                                             </div>
                                             <p className="text-xs text-slate-500 mt-1 truncate">{t.route}</p>
                                         </div>
@@ -266,7 +273,7 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
                                         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                             <div>
                                                 <div className="text-[10px] text-slate-400">Rate per km</div>
-                                                <div className="text-sm font-black text-amber-500">{v.rate_per_km}</div>
+                                                <div className="text-sm font-black text-amber-500">{formatProductPrice(v, currencyCode, 'per_km')} / km</div>
                                             </div>
                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
                                                 isSelected ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
@@ -324,7 +331,7 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
                                         }`}
                                     >
                                         <div className="h-36 overflow-hidden bg-slate-800 relative">
-                                            <img src={acc.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80'} alt="" className="w-full h-full object-cover" />
+                                            <img src={acc.image || '/images/legacy/stay-default.jpg'} alt="" className="w-full h-full object-cover" />
                                             <span className="absolute top-2 left-2 bg-slate-950/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full capitalize">
                                                 {acc.category}
                                             </span>
@@ -342,7 +349,7 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
                                         </div>
                                         <div className="p-4 pt-0 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                             <div className="text-xs font-black text-amber-500">
-                                                LKR {Number(acc.price_lkr).toLocaleString()} / night
+                                                {formatProductPrice(acc, currencyCode, 'night')} / night
                                             </div>
                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
                                                 isSelected ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
@@ -390,7 +397,7 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
                                     <div className="p-3 bg-slate-800/80 rounded-xl">
                                         <div className="text-slate-400">Selected Tour Package:</div>
                                         <div className="font-bold text-amber-400 text-sm mt-0.5">{selectedTour.title}</div>
-                                        <div className="text-slate-300 mt-1">LKR {Number(selectedTour.price_lkr).toLocaleString()}</div>
+                                        <div className="text-slate-300 mt-1">{formatProductPrice(selectedTour, currencyCode, 'package')}</div>
                                     </div>
                                 ) : (
                                     <>
@@ -403,13 +410,13 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
                                         <div className="p-3 bg-slate-800/80 rounded-xl">
                                             <div className="text-slate-400">Vehicle & Chauffeur:</div>
                                             <div className="font-bold text-amber-400 mt-0.5">{selectedVehicle?.name || 'Private Van'}</div>
-                                            <div className="text-slate-300 mt-0.5">{selectedVehicle?.rate_per_km} rate</div>
+                                            <div className="text-slate-300 mt-0.5">{formatProductPrice(selectedVehicle, currencyCode, 'per_km')} / km</div>
                                         </div>
 
                                         <div className="p-3 bg-slate-800/80 rounded-xl">
                                             <div className="text-slate-400">Accommodation:</div>
                                             <div className="font-bold text-emerald-400 mt-0.5">{selectedAccommodation?.name || 'Boutique Stay'}</div>
-                                            <div className="text-slate-300 mt-0.5">LKR {Number(selectedAccommodation?.price_lkr || 0).toLocaleString()} / night</div>
+                                            <div className="text-slate-300 mt-0.5">{formatProductPrice(selectedAccommodation, currencyCode, 'night')} / night</div>
                                         </div>
                                     </>
                                 )}
@@ -418,7 +425,7 @@ export default function Planner({ tours = [], vehicles = [], accommodations = []
                             <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
                                 <div>
                                     <div className="text-xs text-slate-400">Estimated Total Quote</div>
-                                    <div className="text-2xl font-black text-amber-400">LKR {combinedEstimate.toLocaleString()}</div>
+                                    <div className="text-2xl font-black text-amber-400">{formatAmount(combinedEstimate, currencyCode)}</div>
                                 </div>
                             </div>
                         </div>

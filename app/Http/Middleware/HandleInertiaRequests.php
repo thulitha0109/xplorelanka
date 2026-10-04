@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use App\Services\CurrencyPreferenceService;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -51,6 +52,17 @@ class HandleInertiaRequests extends Middleware
                 'error'   => fn () => $request->session()->get('error'),
             ],
             'appName' => config('app.name'),
+            'site' => [
+                'name' => config('seo.name'),
+                'url' => config('seo.url'),
+                'description' => config('seo.description'),
+                'logo' => config('seo.logo'),
+            ],
+            'currency' => [
+                'code' => app(CurrencyPreferenceService::class)->defaultCurrency($request),
+                'country' => app(CurrencyPreferenceService::class)->countryCode($request),
+                'supported' => config('currency.supported'),
+            ],
         ];
     }
 }

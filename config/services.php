@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // Set only after selecting a gateway that supports the merchant's region.
+    'payments' => [
+        'provider' => env('PAYMENT_PROVIDER'),
+        'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET'),
+        'currency' => env('PAYMENT_CURRENCY'),
+    ],
+
 ];

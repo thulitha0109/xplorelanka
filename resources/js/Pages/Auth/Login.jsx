@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, LogIn, Compass, CheckCircle2, AlertCircle } from 'lucide-react';
+import SeoHead from '../../Components/SeoHead';
 
 export default function Login() {
     const { flash } = usePage().props;
@@ -19,7 +20,7 @@ export default function Login() {
 
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
-            <Head title="Login — Xplor Lanka" />
+            <SeoHead title="Sign In | Xplore Lanka" description="Sign in to your Xplore Lanka account." noIndex />
 
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

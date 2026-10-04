@@ -20,6 +20,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     networks:
       - xplorelanka
 
@@ -118,11 +120,29 @@ services:
     volumes:
       - xplorelanka_minio_data:/data
     command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    networks:
+      - xplorelanka
+
+  minio-init:
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+    container_name: xplorelanka_minio_init
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-xplore_minio}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-xplore_secret_key}
+      AWS_ENDPOINT: http://minio:9000
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_USE_PATH_STYLE_ENDPOINT: "true"
+      AWS_BUCKET: ${AWS_BUCKET:-xplorelanka}
+    volumes:
+      - ./:/var/www
+    working_dir: /var/www
+    command: php docker/dev/init-minio.php
+    restart: "no"
     networks:
       - xplorelanka
 

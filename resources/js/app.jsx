@@ -3,10 +3,12 @@ import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 
-const appName = import.meta.env.VITE_APP_NAME || "Prince's Global Travel Planner";
+const appName = 'Xplore Lanka';
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => (title
+        ? (title.toLowerCase().includes('xplore lanka') ? title : `${title} | ${appName}`)
+        : appName),
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.jsx`,

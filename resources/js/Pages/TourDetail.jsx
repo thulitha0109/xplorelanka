@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import { formatProductPrice } from '../lib/currency';
+import SeoHead from '../Components/SeoHead';
 import GoogleMap from '../Components/GoogleMap';
 import ReviewSection from '../Components/ReviewSection';
 import { MapPin, Star, Calendar, Clock, CheckCircle2, MessageCircle, ArrowLeft, Image as ImageIcon, Users, Zap, Tag, ShieldCheck, Sparkles, ChevronRight } from 'lucide-react';
 
 export default function TourDetail({ tour, relatedTours = [], reviews = [] }) {
-    const { flash } = usePage().props;
+    const { flash, currency, site } = usePage().props;
     const [galleryOpen, setGalleryOpen] = useState(false);
     
     const { data, setData, post, processing, reset } = useForm({
@@ -40,13 +42,38 @@ export default function TourDetail({ tour, relatedTours = [], reviews = [] }) {
     const avgRating = reviews.length > 0 
         ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1)
         : (tour.rating || 4.9);
+    const pageCurrency = currency?.code || 'USD';
+    const tripPrice = tour.prices?.package?.[pageCurrency];
+    const absoluteImage = tour.image?.startsWith('http') ? tour.image : `${site?.url || 'https://xplorelanka.com'}${tour.image || ''}`;
+    const tripSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'TouristTrip',
+        name: tour.title,
+        description: tour.description,
+        image: absoluteImage,
+        touristType: tour.tags || undefined,
+        provider: { '@id': `${site?.url || 'https://xplorelanka.com'}/#organization` },
+        itinerary: Array.isArray(tour.itinerary) && tour.itinerary.length > 0 ? {
+            '@type': 'ItemList',
+            itemListElement: tour.itinerary.map((day, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                name: day.title,
+                description: day.desc,
+            })),
+        } : undefined,
+        offers: tripPrice ? {
+            '@type': 'Offer',
+            price: tripPrice.amount,
+            priceCurrency: pageCurrency,
+            availability: 'https://schema.org/InStock',
+            url: typeof window !== 'undefined' ? window.location.href : `${site?.url || 'https://xplorelanka.com'}/tours/${tour.id}`,
+        } : undefined,
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
-            <Head>
-                <title>{`${tour.seo_title || tour.title} - Xplor Lanka`}</title>
-                <meta name="description" content={tour.seo_description || tour.description?.substring(0, 160)} />
-            </Head>
+            <SeoHead title={`${tour.seo_title || tour.title} | Xplore Lanka`} description={tour.seo_description || tour.description?.substring(0, 160)} image={tour.image} type="product" schema={tripSchema} />
             
             <Navbar currentPath="/tours" />
 
@@ -206,11 +233,8 @@ export default function TourDetail({ tour, relatedTours = [], reviews = [] }) {
                             <div className="border-b border-slate-100 pb-4">
                                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Starting from</div>
                                 <div className="text-3xl sm:text-4xl font-black text-amber-600 tracking-tight">
-                                    LKR {Number(tour.price_lkr).toLocaleString()}
+                                    {formatProductPrice(tour, currency?.code || 'USD', 'package')}
                                 </div>
-                                {tour.price_usd && (
-                                    <div className="text-xs font-semibold text-slate-500 mt-1">Approx. USD ${tour.price_usd} per person</div>
-                                )}
                             </div>
 
                             {/* Booking Form */}
@@ -307,7 +331,7 @@ export default function TourDetail({ tour, relatedTours = [], reviews = [] }) {
                                             <h3 className="font-bold text-slate-900 group-hover:text-amber-600 transition-colors mb-2 line-clamp-1">{related.title}</h3>
                                             <div className="flex justify-between items-center text-xs text-slate-500">
                                                 <span className="flex items-center"><Clock className="w-3.5 h-3.5 mr-1 text-amber-500"/> {related.duration}</span>
-                                                <span className="font-black text-amber-600">LKR {Number(related.price_lkr).toLocaleString()}</span>
+                                                <span className="font-black text-amber-600">{formatProductPrice(related, currency?.code || 'USD', 'package')}</span>
                                             </div>
                                         </div>
                                     </div>

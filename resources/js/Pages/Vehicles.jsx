@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import { formatAmount, formatProductPrice, getPriceAmount } from '../lib/currency';
+import SeoHead from '../Components/SeoHead';
 import { 
     Car, ShieldCheck, CheckCircle2, MessageCircle, Star, 
     Luggage, Users, Fuel, Gauge, PenLine, Sparkles, Navigation,
@@ -9,7 +11,8 @@ import {
 } from 'lucide-react';
 
 export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPartners = [], currentCategory = 'all' }) {
-    const { flash } = usePage().props;
+    const { flash, currency } = usePage().props;
+    const currencyCode = currency?.code || 'USD';
     const [selectedCategory, setSelectedCategory] = useState(currentCategory);
     const [calcMode, setCalcMode] = useState('distance'); // 'distance' or 'days'
     const [distance, setDistance] = useState(150);
@@ -44,8 +47,8 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
         );
 
     const currentVehicleObj = vehicles.find(v => v.vehicle_key === selectedVehicleKey) || vehicles[0] || {};
-    const rateNumber = currentVehicleObj.rate_per_km ? parseInt(currentVehicleObj.rate_per_km.replace(/[^0-9]/g, '')) || 120 : 120;
-    const dailyRate = currentVehicleObj.daily_rate_lkr ? Number(currentVehicleObj.daily_rate_lkr) : (rateNumber * 100);
+    const rateNumber = getPriceAmount(currentVehicleObj, currencyCode, 'per_km') || 0;
+    const dailyRate = getPriceAmount(currentVehicleObj, currencyCode, 'day') || 0;
 
     const estimatedCost = calcMode === 'distance'
         ? distance * rateNumber
@@ -65,7 +68,7 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
     const handleFormSubmit = (e) => {
         e.preventDefault();
         data.vehicle_type = selectedVehicleKey;
-        data.notes = `Vehicle Booking: ${currentVehicleObj.name} (${calcMode === 'distance' ? distance + ' km route' : rentalDays + ' days hire'}). Est: LKR ${estimatedCost.toLocaleString()}. ${data.notes}`;
+        data.notes = `Vehicle Booking: ${currentVehicleObj.name} (${calcMode === 'distance' ? distance + ' km route' : rentalDays + ' days hire'}). Estimate: ${formatAmount(estimatedCost, currencyCode)}. ${data.notes}`;
 
         post('/bookings', {
             onSuccess: (page) => {
@@ -79,7 +82,11 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
-            <Head title="Private Vehicle Fleet, Airport Transfers & Chauffeur Services - Xplor Lanka" />
+            <SeoHead
+                title="Sri Lanka Private Transfers & Chauffeur Hire | Xplore Lanka"
+                description="Request a private Sri Lanka airport transfer or chauffeur-driven trip with Xplore Lanka. Compare local vehicle options and submit an itinerary inquiry."
+                schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'Sri Lanka Private Transfers and Chauffeur Hire', serviceType: 'Private transport and airport transfers', provider: { '@id': 'https://xplorelanka.com/#organization' }, areaServed: { '@type': 'Country', name: 'Sri Lanka' } }}
+            />
             <Navbar currentPath="/vehicles" />
 
             {flash?.success && (
@@ -142,7 +149,7 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
                                     >
                                         <div className="relative h-48 overflow-hidden bg-slate-100">
                                             <img
-                                                src={v.image || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80'}
+                                                src={v.image || '/images/legacy/vehicle-default.jpg'}
                                                 alt={v.name}
                                                 className="w-full h-full object-cover"
                                             />
@@ -192,9 +199,9 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
                                             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                                                 <div>
                                                     <span className="text-[10px] uppercase font-bold text-slate-400">Rate per km</span>
-                                                    <div className="text-amber-600 font-black text-lg">{v.rate_per_km}</div>
-                                                    {v.daily_rate_lkr > 0 && (
-                                                        <span className="text-[10px] text-slate-400">LKR {Number(v.daily_rate_lkr).toLocaleString()} / day</span>
+                                                    <div className="text-amber-600 font-black text-lg">{formatProductPrice(v, currencyCode, 'per_km')} / km</div>
+                                                    {getPriceAmount(v, currencyCode, 'day') > 0 && (
+                                                        <span className="text-[10px] text-slate-400">{formatProductPrice(v, currencyCode, 'day')} / day</span>
                                                     )}
                                                 </div>
                                                 <div className="flex items-center space-x-2">
@@ -297,7 +304,7 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
                                 </div>
                                 <div className="text-left sm:text-right">
                                     <div className="text-xs text-slate-400">Estimated Total</div>
-                                    <div className="text-3xl font-black text-amber-600">LKR {estimatedCost.toLocaleString()}</div>
+                                    <div className="text-3xl font-black text-amber-600">{formatAmount(estimatedCost, currencyCode)}</div>
                                 </div>
                             </div>
                         </div>
@@ -336,7 +343,7 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
                         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-lg sticky top-24 space-y-5">
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
                                 <img
-                                    src={currentVehicleObj.image || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80'}
+                                    src={currentVehicleObj.image || '/images/legacy/vehicle-default.jpg'}
                                     alt={currentVehicleObj.name || 'Vehicle'}
                                     className="w-full h-52 object-cover"
                                 />

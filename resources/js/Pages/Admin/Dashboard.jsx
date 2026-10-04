@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
+import { Link, useForm, router, usePage } from '@inertiajs/react';
 import Navbar from '../../Components/Navbar';
 import Footer from '../../Components/Footer';
 import MediaUploader from '../../Components/MediaUploader';
+import { formatProductPrice } from '../../lib/currency';
+import SeoHead from '../../Components/SeoHead';
 import { 
     LayoutDashboard, Users, Calendar, MapPin, 
     Star, Settings, LogOut, CheckCircle2, 
@@ -89,6 +91,8 @@ export default function AdminDashboard({
         location: '',
         vehicle_or_property_details: '',
         rate_lkr: '',
+        rate_usd: '',
+        rate_eur: '',
         rating: 5.0,
         status: 'approved',
         message: '',
@@ -105,6 +109,8 @@ export default function AdminDashboard({
             location: 'Colombo, Sri Lanka',
             vehicle_or_property_details: '',
             rate_lkr: '',
+            rate_usd: '',
+            rate_eur: '',
             rating: 5.0,
             status: 'approved',
             message: '',
@@ -122,6 +128,8 @@ export default function AdminDashboard({
             location: p.location || '',
             vehicle_or_property_details: p.vehicle_or_property_details || '',
             rate_lkr: p.rate_lkr || '',
+            rate_usd: p.prices?.partner_rate?.USD?.amount || '',
+            rate_eur: p.prices?.partner_rate?.EUR?.amount || '',
             rating: p.rating || 5.0,
             status: p.status || 'approved',
             message: p.message || '',
@@ -208,7 +216,7 @@ export default function AdminDashboard({
             author: auth?.user?.name || 'Xplor Lanka Expert',
             reading_time_min: 5,
             tags_input: 'Sri Lanka, Travel, Tours, 2026',
-            image: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=1200&q=80',
+            image: '/images/legacy/blog-default.jpg',
             is_published: true,
         });
         setBlogModalOpen(true);
@@ -336,10 +344,14 @@ export default function AdminDashboard({
         transmission: 'Automatic',
         fuel_type: 'Diesel',
         rate_per_km: 'Rs. 140 / km',
+        per_km_usd: '',
+        per_km_eur: '',
         base_rate_lkr: 18000,
         daily_rate_lkr: 22000,
+        daily_rate_usd: '',
+        daily_rate_eur: '',
         icon: 'Users',
-        image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80',
+        image: '/images/legacy/van-default.jpg',
         description: '',
         driver_included: true,
         ac_available: true,
@@ -360,10 +372,14 @@ export default function AdminDashboard({
             transmission: 'Automatic',
             fuel_type: 'Diesel',
             rate_per_km: 'Rs. 140 / km',
+            per_km_usd: '',
+            per_km_eur: '',
             base_rate_lkr: 18000,
             daily_rate_lkr: 22000,
+            daily_rate_usd: '',
+            daily_rate_eur: '',
             icon: 'Users',
-            image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80',
+            image: '/images/legacy/van-default.jpg',
             description: 'Spacious high-roof air conditioned passenger van with experienced tourist chauffeur.',
             driver_included: true,
             ac_available: true,
@@ -385,8 +401,12 @@ export default function AdminDashboard({
             transmission: v.transmission || 'Automatic',
             fuel_type: v.fuel_type || 'Diesel',
             rate_per_km: v.rate_per_km || '',
+            per_km_usd: v.prices?.per_km?.USD?.amount || '',
+            per_km_eur: v.prices?.per_km?.EUR?.amount || '',
             base_rate_lkr: v.base_rate_lkr || 0,
             daily_rate_lkr: v.daily_rate_lkr || 0,
+            daily_rate_usd: v.prices?.day?.USD?.amount || '',
+            daily_rate_eur: v.prices?.day?.EUR?.amount || '',
             icon: v.icon || 'Car',
             image: v.image || '',
             description: v.description || '',
@@ -422,9 +442,11 @@ export default function AdminDashboard({
         partner_id: '',
         location: 'Ella, Hill Country',
         price_lkr: 28000,
+        price_usd: '',
+        price_eur: '',
         period: 'night',
         rating: 4.9,
-        image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80',
+        image: '/images/legacy/lodge-default.jpg',
         amenities_input: 'Mountain View, Infinity Pool, Breakfast, Wi-Fi, AC',
         description: '',
         contact_phone: '+94 57 223 4567',
@@ -442,9 +464,11 @@ export default function AdminDashboard({
             partner_id: partners[0]?.id || '',
             location: 'Ella, Hill Country',
             price_lkr: 28000,
+            price_usd: '',
+            price_eur: '',
             period: 'night',
             rating: 4.9,
-            image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80',
+            image: '/images/legacy/lodge-default.jpg',
             amenities_input: 'Mountain View, Infinity Pool, Breakfast, Wi-Fi, AC',
             description: 'Handcrafted luxury eco sanctuary nestled in the misty mountain slopes.',
             contact_phone: '+94 57 223 4567',
@@ -463,6 +487,8 @@ export default function AdminDashboard({
             partner_id: acc.partner_id || '',
             location: acc.location || '',
             price_lkr: acc.price_lkr || 0,
+            price_usd: acc.prices?.night?.USD?.amount || '',
+            price_eur: acc.prices?.night?.EUR?.amount || '',
             period: acc.period || 'night',
             rating: acc.rating || 5.0,
             image: acc.image || '',
@@ -496,7 +522,7 @@ export default function AdminDashboard({
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-            <Head title="Admin Management Portal - Xplor Lanka" />
+            <SeoHead title="Admin Management Portal | Xplore Lanka" description="Private Xplore Lanka administration portal." noIndex />
             <Navbar currentPath="/admin/dashboard" />
 
             {/* Flash notifications */}
@@ -696,7 +722,7 @@ export default function AdminDashboard({
                                         <tr>
                                             <th className="px-6 py-4">Tour Title & Route</th>
                                             <th className="px-6 py-4">Category</th>
-                                            <th className="px-6 py-4">Price (LKR)</th>
+                                            <th className="px-6 py-4">Prices (LKR / USD / EUR)</th>
                                             <th className="px-6 py-4">Duration</th>
                                             <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4 text-right">Actions</th>
@@ -718,7 +744,8 @@ export default function AdminDashboard({
                                                     <span className="uppercase text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">{tour.category}</span>
                                                 </td>
                                                 <td className="px-6 py-4 font-black text-amber-600">
-                                                    LKR {Number(tour.price_lkr).toLocaleString()}
+                                                    <div>LKR {Number(tour.price_lkr).toLocaleString()}</div>
+                                                    <div className="text-[10px] font-semibold text-slate-500">{formatProductPrice(tour, 'USD', 'package')} / {formatProductPrice(tour, 'EUR', 'package')}</div>
                                                 </td>
                                                 <td className="px-6 py-4 text-xs font-medium text-slate-600">{tour.duration}</td>
                                                 <td className="px-6 py-4">
@@ -784,7 +811,7 @@ export default function AdminDashboard({
                                             <tr key={acc.id} className="hover:bg-slate-50/60 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center space-x-3">
-                                                        <img src={acc.image || 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=400&q=80'} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                                                        <img src={acc.image || '/images/legacy/lodge-default.jpg'} alt="" className="w-12 h-12 rounded-xl object-cover" />
                                                         <div>
                                                             <div className="font-bold text-slate-900 max-w-[220px] truncate">{acc.name}</div>
                                                             <div className="text-xs text-slate-500 flex items-center space-x-1">
@@ -801,7 +828,8 @@ export default function AdminDashboard({
                                                     {acc.partner ? acc.partner.name : <span className="text-slate-400">Direct</span>}
                                                 </td>
                                                 <td className="px-6 py-4 font-black text-amber-600">
-                                                    LKR {Number(acc.price_lkr).toLocaleString()}
+                                                    <div>LKR {Number(acc.price_lkr).toLocaleString()}</div>
+                                                    <div className="text-[10px] font-semibold text-slate-500">{formatProductPrice(acc, 'USD', 'night')} / {formatProductPrice(acc, 'EUR', 'night')}</div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center space-x-1 text-xs font-bold text-amber-500">
@@ -887,9 +915,12 @@ export default function AdminDashboard({
                                                 <td className="px-6 py-4 text-xs font-medium text-slate-600">
                                                     {v.seats} ({v.luggage_capacity || 4} bags)
                                                 </td>
-                                                <td className="px-6 py-4 font-black text-amber-600">{v.rate_per_km}</td>
+                                                <td className="px-6 py-4 font-black text-amber-600">
+                                                    <div>{v.rate_per_km}</div>
+                                                    <div className="text-[10px] font-semibold text-slate-500">{formatProductPrice(v, 'USD', 'per_km')} / {formatProductPrice(v, 'EUR', 'per_km')}</div>
+                                                </td>
                                                 <td className="px-6 py-4 font-semibold text-slate-700">
-                                                    {v.daily_rate_lkr ? `LKR ${Number(v.daily_rate_lkr).toLocaleString()}` : '-'}
+                                                    {v.daily_rate_lkr ? <><div>LKR {Number(v.daily_rate_lkr).toLocaleString()}</div><div className="text-[10px] text-slate-500">{formatProductPrice(v, 'USD', 'day')} / {formatProductPrice(v, 'EUR', 'day')}</div></> : '-'}
                                                 </td>
                                                 <td className="px-6 py-4 text-xs text-slate-500">
                                                     {v.partner?.name || 'Direct Fleet'}
@@ -956,7 +987,7 @@ export default function AdminDashboard({
                                             <tr key={post.id} className="hover:bg-slate-50/60 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center space-x-3">
-                                                        <img src={post.image || 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=400&q=80'} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                                                        <img src={post.image || '/images/legacy/blog-default.jpg'} alt="" className="w-12 h-12 rounded-xl object-cover" />
                                                         <div>
                                                             <div className="font-bold text-slate-900 max-w-[240px] truncate">{post.title}</div>
                                                             <div className="text-xs text-slate-400 font-mono">/{post.slug}</div>
@@ -1392,7 +1423,7 @@ export default function AdminDashboard({
                                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div>
                                     <label className="block font-bold text-slate-700 mb-1">Base Rate (LKR)</label>
                                     <input
@@ -1401,6 +1432,14 @@ export default function AdminDashboard({
                                         onChange={(e) => partnerForm.setData('rate_lkr', e.target.value)}
                                         className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Rate (USD)</label>
+                                    <input type="number" min="0" step="0.01" value={partnerForm.data.rate_usd} onChange={(e) => partnerForm.setData('rate_usd', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Rate (EUR)</label>
+                                    <input type="number" min="0" step="0.01" value={partnerForm.data.rate_eur} onChange={(e) => partnerForm.setData('rate_eur', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
                                 </div>
                                 <div>
                                     <label className="block font-bold text-slate-700 mb-1">Status</label>
@@ -1922,7 +1961,7 @@ export default function AdminDashboard({
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-bold text-slate-700 mb-1">Rate Per KM</label>
+                                    <label className="block font-bold text-slate-700 mb-1">Rate Per KM (LKR)</label>
                                     <input
                                         type="text"
                                         required
@@ -1940,6 +1979,22 @@ export default function AdminDashboard({
                                         onChange={(e) => vehicleForm.setData('daily_rate_lkr', Number(e.target.value))}
                                         className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Rate Per KM (USD)</label>
+                                    <input type="number" min="0" step="0.01" value={vehicleForm.data.per_km_usd} onChange={(e) => vehicleForm.setData('per_km_usd', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Rate Per KM (EUR)</label>
+                                    <input type="number" min="0" step="0.01" value={vehicleForm.data.per_km_eur} onChange={(e) => vehicleForm.setData('per_km_eur', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Daily Rate (USD)</label>
+                                    <input type="number" min="0" step="0.01" value={vehicleForm.data.daily_rate_usd} onChange={(e) => vehicleForm.setData('daily_rate_usd', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Daily Rate (EUR)</label>
+                                    <input type="number" min="0" step="0.01" value={vehicleForm.data.daily_rate_eur} onChange={(e) => vehicleForm.setData('daily_rate_eur', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
                                 </div>
                             </div>
 
@@ -2039,7 +2094,7 @@ export default function AdminDashboard({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div>
                                     <label className="block font-bold text-slate-700 mb-1">Category</label>
                                     <select
@@ -2091,6 +2146,14 @@ export default function AdminDashboard({
                                         onChange={(e) => accommodationForm.setData('price_lkr', Number(e.target.value))}
                                         className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Price Per Night (USD)</label>
+                                    <input type="number" min="0" step="0.01" value={accommodationForm.data.price_usd} onChange={(e) => accommodationForm.setData('price_usd', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Price Per Night (EUR)</label>
+                                    <input type="number" min="0" step="0.01" value={accommodationForm.data.price_eur} onChange={(e) => accommodationForm.setData('price_eur', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50" />
                                 </div>
                             </div>
 

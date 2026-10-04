@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Tour;
+use App\Services\CurrencyPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -15,7 +17,8 @@ class BookingController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:50',
-            'country' => 'nullable|string',
+            'country' => 'nullable|string|max:100',
+            'country_code' => 'nullable|string|size:2',
             'tour_id' => 'nullable|exists:tours,id',
             'pickup_location' => 'nullable|string',
             'dropoff_location' => 'nullable|string',
@@ -23,12 +26,38 @@ class BookingController extends Controller
             'end_date' => 'nullable|date',
             'guests_count' => 'nullable|integer',
             'vehicle_type' => 'nullable|string',
-            'total_price' => 'nullable|numeric',
             'notes' => 'nullable|string',
         ]);
 
+        $currency = app(CurrencyPreferenceService::class)->defaultCurrency($request);
+        $tourPrice = null;
+        if (! empty($validated['tour_id'])) {
+            $tour = Tour::with('catalogPrices')->findOrFail($validated['tour_id']);
+            $tourPrice = $tour->catalogPrices->first(
+                fn ($price) => $price->unit === 'package' && $price->currency === $currency && $price->is_active
+            );
+        }
+
         $validated['reference_no'] = 'XPL-' . strtoupper(Str::random(6));
         $validated['status'] = 'pending';
+        $validated['currency'] = $currency;
+        $validated['country_code'] = isset($validated['country_code'])
+            ? strtoupper($validated['country_code'])
+            : app(CurrencyPreferenceService::class)->countryCode($request);
+        $validated['payment_status'] = 'not_started';
+        $validated['quoted_total_minor'] = $tourPrice?->amount_minor;
+        $validated['total_price'] = $tourPrice ? $tourPrice->amount_minor / 100 : null;
+        $validated['price_snapshot'] = $tourPrice ? [
+            'items' => [[
+                'type' => 'tour',
+                'id' => (int) $validated['tour_id'],
+                'unit' => $tourPrice->unit,
+                'quantity' => 1,
+                'amount_minor' => (int) $tourPrice->amount_minor,
+                'currency' => $currency,
+            ]],
+            'captured_at' => now()->toIso8601String(),
+        ] : null;
 
         $booking = Booking::create($validated);
 

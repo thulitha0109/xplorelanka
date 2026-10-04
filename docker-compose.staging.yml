@@ -1,236 +1,130 @@
 # =============================================================================
 # Xplorelanka – Staging Docker Compose
 # =============================================================================
-# Staging architecture:
-#   - Laravel application
-#   - PostgreSQL
-#   - Redis
-#   - Queue worker
-#   - Laravel scheduler
-#
-# Nginx container removed.
-# Host/server-level reverse proxy should handle HTTP traffic.
-#
-# IMPORTANT:
-# The explicit network name prevents Docker Compose from creating:
-#   xplorelanka_xplorelanka_staging
-#
-# Instead it creates:
-#   xplorelanka_staging
+# Mirrors production architecture but with:
+#   - Debug mode disabled even for public staging
+#   - Database/Redis ports bound to loopback only
 # =============================================================================
 
 services:
-
-  # ===========================================================================
-  # Laravel Application
-  # ===========================================================================
-
   app:
+    image: xplorelanka/app-staging:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/prod/Dockerfile
-
     container_name: xplorelanka_staging_app
-
     restart: unless-stopped
-
+    user: www-data
     environment:
       APP_ENV: staging
-      APP_DEBUG: "true"
-
+      APP_DEBUG: "false"
     env_file:
-      - .env
-
+      - .env.staging
     ports:
       - "127.0.0.1:9001:9000"
-
     volumes:
       - xplorelanka_staging_storage:/var/www/storage
-
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-
     networks:
       - xplorelanka_staging
-
-
-  # ===========================================================================
-  # PostgreSQL
-  # ===========================================================================
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   db:
     image: postgres:15-alpine
-
     container_name: xplorelanka_staging_db
-
     restart: unless-stopped
-
     environment:
       POSTGRES_DB: ${DB_DATABASE:-xplorelanka_staging}
       POSTGRES_USER: ${DB_USERNAME:-xplorelanka}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
-
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.staging}
     ports:
-      - "127.0.0.1:5433:5432"
-
+      - "127.0.0.1:5433:5432"             # Exposed for local inspection
     volumes:
       - xplorelanka_staging_db:/var/lib/postgresql/data
-
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka_staging}"
-        ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka_staging}"]
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 10s
-
     networks:
       - xplorelanka_staging
 
-
-  # ===========================================================================
-  # Redis
-  # ===========================================================================
-
   redis:
-    image: redis:alpine
-
+    image: redis:7-alpine
     container_name: xplorelanka_staging_redis
-
     restart: unless-stopped
-
     ports:
-      - "127.0.0.1:6380:6379"
-
+      - "127.0.0.1:6380:6379"             # Exposed for local inspection
     volumes:
       - xplorelanka_staging_redis:/data
-
     healthcheck:
-      test:
-        [
-          "CMD",
-          "redis-cli",
-          "ping"
-        ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 5s
-
     networks:
       - xplorelanka_staging
-
-
-  # ===========================================================================
-  # Queue Worker
-  # ===========================================================================
 
   worker:
+    image: xplorelanka/app-staging:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/prod/Dockerfile
-
     container_name: xplorelanka_staging_worker
-
     restart: unless-stopped
-
-    command:
-      php artisan queue:work redis
-      --sleep=3
-      --tries=3
-      --timeout=90
-
+    user: www-data
+    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=90
     env_file:
-      - .env
-
+      - .env.staging
     volumes:
       - xplorelanka_staging_storage:/var/www/storage
-
     depends_on:
       app:
-        condition: service_started
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-
     networks:
       - xplorelanka_staging
-
-
-  # ===========================================================================
-  # Laravel Scheduler
-  # ===========================================================================
 
   scheduler:
+    image: xplorelanka/app-staging:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/prod/Dockerfile
-
     container_name: xplorelanka_staging_scheduler
-
     restart: unless-stopped
-
-    command:
-      php artisan schedule:work
-
+    user: www-data
+    command: php artisan schedule:work
     env_file:
-      - .env
-
+      - .env.staging
     volumes:
       - xplorelanka_staging_storage:/var/www/storage
-
     depends_on:
       app:
-        condition: service_started
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-
     networks:
       - xplorelanka_staging
-
-
-# =============================================================================
-# NETWORK
-# =============================================================================
-#
-# Explicit "name" is critical.
-#
-# Without it Docker Compose creates:
-#   xplorelanka_xplorelanka_staging
-#
-# With it Docker creates:
-#   xplorelanka_staging
-#
-# This matches the deployment script:
-#   NETWORK_NAME="xplorelanka_staging"
-# =============================================================================
 
 networks:
   xplorelanka_staging:
-    name: xplorelanka_staging
     driver: bridge
 
-
-# =============================================================================
-# PERSISTENT VOLUMES
-# =============================================================================
-
 volumes:
-
   xplorelanka_staging_db:
-    name: xplorelanka_staging_db
-
   xplorelanka_staging_redis:
-    name: xplorelanka_staging_redis
-
   xplorelanka_staging_storage:
-    name: xplorelanka_staging_storage

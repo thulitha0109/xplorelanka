@@ -1,8 +1,9 @@
 import React from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import { Phone, Mail, MapPin, MessageCircle, CheckCircle2 } from 'lucide-react';
+import SeoHead from '../Components/SeoHead';
 
 export default function Contact() {
     const { flash } = usePage().props;
@@ -27,7 +28,11 @@ export default function Contact() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans">
-            <Head title="Contact Us - Xplor Lanka" />
+            <SeoHead
+                title="Contact Xplore Lanka in Kandy | Sri Lanka Trip Help"
+                description="Contact Xplore Lanka in Kandy to plan a custom Sri Lanka itinerary, arrange a local guide or request a private transfer. Call, WhatsApp or email us."
+                schema={{ '@context': 'https://schema.org', '@type': 'ContactPage', name: 'Contact Xplore Lanka', mainEntity: { '@id': 'https://xplorelanka.com/#organization' } }}
+            />
             <Navbar currentPath="/contact" />
 
             {flash?.success && (

@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PlannerController;
@@ -60,12 +61,12 @@ Route::post('/media/upload',       [MediaController::class, 'upload'])->name('me
 
 // ── Public Pages ───────────────────────────────────────────────────────────────
 Route::get('/', function () {
-    $featuredTours = Tour::where('is_active', true)->where('is_featured', true)->take(4)->get();
+    $featuredTours = Tour::with('catalogPrices')->where('is_active', true)->where('is_featured', true)->take(4)->get();
     if ($featuredTours->isEmpty()) {
-        $featuredTours = Tour::where('is_active', true)->take(4)->get();
+        $featuredTours = Tour::with('catalogPrices')->where('is_active', true)->take(4)->get();
     }
-    $accommodations = Accommodation::with('partner')->where('is_available', true)->take(3)->get();
-    $vehicles       = Vehicle::with('partner')->where('is_available', true)->get();
+    $accommodations = Accommodation::with(['partner', 'catalogPrices'])->where('is_available', true)->take(3)->get();
+    $vehicles       = Vehicle::with(['partner', 'catalogPrices'])->where('is_available', true)->get();
     $reviews        = Review::with(['tour', 'accommodation', 'vehicle'])->where('is_approved', true)->latest()->take(8)->get();
 
     return Inertia::render('Home', [
@@ -79,8 +80,8 @@ Route::get('/', function () {
 // Tours
 Route::get('/tours',      [TourController::class, 'index'])->name('tours.index');
 Route::get('/tours/{id}', function ($id) {
-    $tour         = Tour::findOrFail($id);
-    $relatedTours = Tour::where('id', '!=', $id)->where('is_active', true)->take(3)->get();
+    $tour         = Tour::with('catalogPrices')->findOrFail($id);
+    $relatedTours = Tour::with('catalogPrices')->where('id', '!=', $id)->where('is_active', true)->take(3)->get();
     $reviews      = Review::where('tour_id', $id)->where('is_approved', true)->latest()->get();
 
     return Inertia::render('TourDetail', [
@@ -116,6 +117,7 @@ Route::get('/about',   function () { return Inertia::render('About'); })->name('
 Route::get('/contact', function () { return Inertia::render('Contact'); })->name('contact');
 
 // ── Public Form Submissions ────────────────────────────────────────────────────
+Route::post('/currency-preference', [CurrencyController::class, 'update'])->name('currency.update');
 Route::post('/bookings',             [BookingController::class, 'store'])->name('bookings.store');
 Route::post('/partner-applications', [PartnerController::class, 'store'])->name('partners.store');
 Route::post('/reviews',              [ReviewController::class, 'store'])->name('reviews.store');

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Vehicle extends Model
 {
     use HasFactory;
+    use Concerns\HasCatalogPrices;
 
     protected $fillable = [
         'partner_id',

@@ -1,13 +1,17 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import SeoHead from '../Components/SeoHead';
 import { ShieldCheck, Heart, Award, Users } from 'lucide-react';
 
 export default function About() {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans">
-            <Head title="About Us - Xplor Lanka" />
+            <SeoHead
+                title="About Xplore Lanka | Local Sri Lanka Travel Team in Kandy"
+                description="Meet Xplore Lanka, a Kandy-based travel team founded in 2016, creating custom Sri Lanka itineraries, local cultural experiences and private transfers."
+                schema={{ '@context': 'https://schema.org', '@type': 'AboutPage', name: 'About Xplore Lanka', about: { '@id': 'https://xplorelanka.com/#organization' } }}
+            />
             <Navbar currentPath="/about" />
 
             <main className="flex-grow py-16 container mx-auto px-4 space-y-16">

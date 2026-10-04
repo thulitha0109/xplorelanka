@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { MapPin, Navigation } from 'lucide-react';
 
@@ -15,6 +15,13 @@ export default function GoogleMap({
 }) {
     const mapRef = useRef(null);
     const [mapLoaded, setMapLoaded] = useState(false);
+    const safeLocations = useMemo(() => (Array.isArray(locations) ? locations : [])
+        .map((location) => ({
+            ...location,
+            lat: Number(location?.lat),
+            lng: Number(location?.lng),
+        }))
+        .filter((location) => Number.isFinite(location.lat) && Number.isFinite(location.lng)), [locations]);
 
     useEffect(() => {
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -43,7 +50,7 @@ export default function GoogleMap({
                 if (isCancelled || !mapRef.current || !window.google?.maps) return;
 
                 const map = new window.google.maps.Map(mapRef.current, {
-                    center: { lat: locations[0]?.lat || 7.8731, lng: locations[0]?.lng || 80.7718 },
+                    center: { lat: safeLocations[0]?.lat || 7.8731, lng: safeLocations[0]?.lng || 80.7718 },
                     zoom: zoom,
                     mapTypeId: 'terrain',
                     disableDefaultUI: false,
@@ -52,7 +59,7 @@ export default function GoogleMap({
 
                 const pathCoordinates = [];
 
-                locations.forEach((loc, index) => {
+                safeLocations.forEach((loc, index) => {
                     const position = { lat: loc.lat, lng: loc.lng };
                     pathCoordinates.push(position);
 
@@ -104,7 +111,7 @@ export default function GoogleMap({
         return () => {
             isCancelled = true;
         };
-    }, [locations, zoom]);
+    }, [safeLocations, zoom]);
 
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-md">
@@ -132,7 +139,7 @@ export default function GoogleMap({
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
-                            {locations.map((loc, idx) => (
+                            {safeLocations.map((loc, idx) => (
                                 <div key={idx} className="bg-slate-800 p-3 rounded-xl border border-slate-700 flex items-center space-x-3 text-xs">
                                     <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
                                         {idx + 1}

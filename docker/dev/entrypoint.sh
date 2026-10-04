@@ -8,8 +8,5 @@ mkdir -p /var/www/storage/framework/cache/data \
          /var/www/storage/logs \
          /var/www/bootstrap/cache
 
-# Fix permissions if needed
-chmod -R 775 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
-
 # Execute the container command
 exec "$@"

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import SeoHead from '../Components/SeoHead';
+import { formatProductPrice } from '../lib/currency';
 import GoogleMap from '../Components/GoogleMap';
 import ReviewSection from '../Components/ReviewSection';
 import { 
@@ -11,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function Home({ featuredTours = [], accommodations = [], vehicles = [], reviews = [] }) {
-    const { flash } = usePage().props;
+    const { flash, currency } = usePage().props;
     const [selectedTour, setSelectedTour] = useState(null);
     const [bookingModalOpen, setBookingModalOpen] = useState(false);
     
@@ -19,38 +21,38 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
     const defaultHeroReviews = [
         {
             id: 101,
-            customer_name: 'Marcus & Elena Rost',
-            customer_country: 'Germany',
-            avatar_img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-            trip_img: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=600&q=80', // Sigiriya Lion Rock
-            title: 'Exceptional 14-day journey — our guide Nuwan was world-class!',
+            customer_name: 'Charlene Coudreau',
+            customer_country: 'International Traveler',
+            avatar_img: '/images/legacy/avatar-1.jpg',
+            trip_img: '/images/legacy/tour-1.jpg',
+            title: 'Flexible, well-organized trip from Sigiriya to Hiriketiya',
             rating: 5,
-            comment: 'We booked the 14-day ultimate tour through Xplor Lanka and it exceeded every expectation. Our private driver and guide Nuwan was attentive, safe, punctual, and shared incredible knowledge of Sri Lankan history. The sunrise climb at Sigiriya and spotting leopards in Yala will stay in our memories forever!',
-            tour_name: '14-Day Ultimate Sri Lanka Explorer',
+            comment: 'Paraphrased from the public Google review: praised Vije for organizing a flexible itinerary, well-paced travel and a memorable trip through to Hiriketiya.',
+            tour_name: 'Private Sri Lanka itinerary',
             avatar_color: 'bg-amber-500'
         },
         {
             id: 102,
-            customer_name: 'Charlotte & James Davies',
-            customer_country: 'United Kingdom',
-            avatar_img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-            trip_img: 'https://images.unsplash.com/photo-1546708973-b339540b5162?auto=format&fit=crop&w=600&q=80', // Ella Train & Tea
-            title: 'Dream honeymoon in the Hill Country & Ceylon Tea Trails',
+            customer_name: 'Anja Riegel',
+            customer_country: 'Germany',
+            avatar_img: '/images/legacy/avatar-2.jpg',
+            trip_img: '/images/legacy/cycling-kandy-1.jpg',
+            title: 'Two-week Sri Lanka trip with Nelka',
             rating: 5,
-            comment: 'From the moment we were picked up at Bandaranaike Airport, Xplor Lanka took care of every detail. The heritage planters bungalow in Nuwara Eliya felt like stepping back in time, and the scenic train ride to Ella had reserved first-class seats arranged flawlessly.',
-            tour_name: '5-Day Hill Country Romantic Getaway',
+            comment: 'Paraphrased from the public Google review: described a two-week February 2026 trip, collaborative planning and dependable help from Nelka, and recommended the experience.',
+            tour_name: 'Private Sri Lanka itinerary',
             avatar_color: 'bg-emerald-600'
         },
         {
             id: 103,
-            customer_name: 'David & Liam Nguyen',
-            customer_country: 'Australia',
-            avatar_img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-            trip_img: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=600&q=80', // Safari Elephants
-            title: 'Wild Ceylon Safari was the highlight for our family',
+            customer_name: 'Sergey Antonov',
+            customer_country: 'International Traveler',
+            avatar_img: '/images/legacy/avatar-3.jpg',
+            trip_img: '/images/legacy/camping-yala.jpg',
+            title: 'Helpful guide and memorable local stops',
             rating: 5,
-            comment: 'Traveling with two teenagers, we wanted nature, excitement, and wildlife. The private 4x4 safari jeeps in Udawalawe got us up-close with majestic elephant herds, and our naturalist in Yala was extraordinary. Spotless AC van and 5-star service throughout.',
-            tour_name: '6-Day Wild Safari & Udawalawe Wildlife',
+            comment: 'Paraphrased from the public Google review: appreciated Nelka’s courteous help and visits to waterfalls, tea plantations, spice and herb gardens, and a meditation centre.',
+            tour_name: 'Private Sri Lanka itinerary',
             avatar_color: 'bg-blue-600'
         }
     ];
@@ -128,7 +130,11 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
-            <Head title="Xplor Lanka - Premium Sri Lanka Tours, Stays & Private Transfers" />
+            <SeoHead
+                title="Sri Lanka Tours, Private Transfers & Local Experiences | Xplore Lanka"
+                description="Discover Sri Lanka with locally guided custom tours, Kandy day trips, private airport transfers, cycling routes and camping experiences from Xplore Lanka."
+                schema={{ '@context': 'https://schema.org', '@type': 'WebPage', name: 'Explore Sri Lanka with Xplore Lanka', description: 'Custom tours and local travel experiences across Sri Lanka.', about: { '@id': 'https://xplorelanka.com/#organization' } }}
+            />
             <Navbar currentPath="/" />
 
             {/* Flash Banner */}
@@ -153,7 +159,7 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
                             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
                                 <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-amber-100 border border-amber-300/80 text-amber-900 text-xs font-bold tracking-wide shadow-xs">
                                     <Sparkles className="w-4 h-4 text-amber-600" />
-                                    <span>Sri Lanka’s #1 Rated Private Tour Specialists</span>
+                                    <span>Locally owned in Kandy since 2016</span>
                                 </div>
 
                                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.15] tracking-tight">
@@ -164,7 +170,7 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
                                 </h1>
 
                                 <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal">
-                                    Bespoke private tours, certified English-speaking chauffeurs, handpicked boutique tea estate bungalows, and thrilling leopard safaris across the island.
+                                    Custom Sri Lankan itineraries, knowledgeable English-speaking local guides, private transfers, cycling routes and camping experiences.
                                 </p>
 
                                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
@@ -197,12 +203,12 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
                                 {/* Trust Metrics Strip */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-200/80">
                                     <div className="bg-white/80 backdrop-blur-xs p-3 rounded-xl border border-slate-200/60 shadow-xs text-center lg:text-left">
-                                        <div className="text-2xl font-black text-amber-600">1,000+</div>
+                                        <div className="text-2xl font-black text-amber-600">2,500+</div>
                                         <div className="text-xs font-semibold text-slate-500">Happy Travelers</div>
                                     </div>
                                     <div className="bg-white/80 backdrop-blur-xs p-3 rounded-xl border border-slate-200/60 shadow-xs text-center lg:text-left">
-                                        <div className="text-2xl font-black text-amber-600">4.9 ★</div>
-                                        <div className="text-xs font-semibold text-slate-500">Verified Ratings</div>
+                                        <div className="text-2xl font-black text-amber-600">5.0 ★</div>
+                                        <div className="text-xs font-semibold text-slate-500">39 Google reviews</div>
                                     </div>
                                     <div className="bg-white/80 backdrop-blur-xs p-3 rounded-xl border border-slate-200/60 shadow-xs text-center lg:text-left">
                                         <div className="text-2xl font-black text-amber-600">100%</div>
@@ -422,7 +428,7 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
                                     {/* Tour Image with Direct Single Page Link */}
                                     <Link href={`/tours/${tour.id}`} className="block relative h-52 overflow-hidden">
                                         <img 
-                                            src={tour.image || 'https://images.unsplash.com/photo-1546708973-b339540b5162?q=80&w=800&auto=format&fit=crop'} 
+                                            src={tour.image || '/images/legacy/tour-1.jpg'}
                                             alt={tour.title} 
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                                         />
@@ -441,7 +447,7 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
                                         <div className="flex items-center space-x-1 text-amber-500 text-xs font-bold">
                                             <Star className="w-4 h-4 fill-amber-500" />
                                             <span className="text-slate-900">{tour.rating || '4.9'}</span>
-                                            <span className="text-slate-400 font-normal">({tour.reviews_count || 32} reviews)</span>
+                                            <span className="text-slate-400 font-normal">({tour.reviews_count ?? 0} reviews)</span>
                                         </div>
 
                                         {/* CLICKABLE TITLE TO SINGLE TOUR PAGE */}
@@ -472,7 +478,7 @@ export default function Home({ featuredTours = [], accommodations = [], vehicles
                                     <div>
                                         <div className="text-[11px] font-medium text-slate-400">Starting from</div>
                                         <div className="text-base font-black text-amber-600">
-                                            LKR {Number(tour.price_lkr).toLocaleString()}
+                                            {formatProductPrice(tour, currency?.code || 'USD', 'package')}
                                         </div>
                                     </div>
                                     <button

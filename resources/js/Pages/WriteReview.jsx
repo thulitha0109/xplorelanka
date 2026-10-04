@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import MediaUploader from '../Components/MediaUploader';
+import SeoHead from '../Components/SeoHead';
 import { Star, MessageSquare, CheckCircle2, ArrowLeft, Send, Sparkles, Building2, Car, MapPin } from 'lucide-react';
 
 export default function WriteReview({ tour = null, accommodation = null, vehicle = null, review = null, isEdit = false }) {
@@ -10,7 +11,7 @@ export default function WriteReview({ tour = null, accommodation = null, vehicle
     const [rating, setRating] = useState(review?.rating || 5);
 
     const targetTitle = tour?.title || accommodation?.name || vehicle?.name || 'Xplor Lanka Experience';
-    const targetImage = tour?.image || accommodation?.image || vehicle?.image || 'https://images.unsplash.com/photo-1546708973-b339540b5162?q=80&w=800&auto=format&fit=crop';
+    const targetImage = tour?.image || accommodation?.image || vehicle?.image || '/images/legacy/review-tea-country.jpg';
     
     let backUrl = '/';
     if (tour) backUrl = `/tours/${tour.id}`;
@@ -71,7 +72,7 @@ export default function WriteReview({ tour = null, accommodation = null, vehicle
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-            <Head title={`${isEdit ? 'Edit Review' : 'Write a Review'} - ${targetTitle}`} />
+            <SeoHead title={`${isEdit ? 'Edit Review' : 'Write a Review'}: ${targetTitle} | Xplore Lanka`} description="Share feedback about your Xplore Lanka tour or travel experience." noIndex />
             <Navbar />
 
             <main className="flex-grow py-12 container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">

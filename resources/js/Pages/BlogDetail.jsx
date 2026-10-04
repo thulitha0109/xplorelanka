@@ -1,11 +1,25 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import { Calendar, User, Clock, Eye, ArrowLeft, ArrowRight, Share2, Tag, Compass, Sparkles, CheckCircle2 } from 'lucide-react';
+import SeoHead from '../Components/SeoHead';
 
 export default function BlogDetail({ post, relatedPosts = [], featuredTours = [] }) {
+    const { site } = usePage().props;
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const postSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.meta_description || post.excerpt || post.title,
+        image: post.image?.startsWith('http') ? post.image : `${site?.url || 'https://xplorelanka.com'}${post.image || ''}`,
+        datePublished: post.published_at,
+        dateModified: post.updated_at || post.published_at,
+        author: { '@type': 'Organization', name: post.author || 'Xplore Lanka' },
+        publisher: { '@id': `${site?.url || 'https://xplorelanka.com'}/#organization` },
+        mainEntityOfPage: shareUrl || `${site?.url || 'https://xplorelanka.com'}/blog/${post.slug}`,
+    };
 
     const handleShare = () => {
         if (navigator.share) {
@@ -21,18 +35,7 @@ export default function BlogDetail({ post, relatedPosts = [], featuredTours = []
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
-            <Head>
-                <title>{post.meta_title || `${post.title} | Xplor Lanka`}</title>
-                <meta name="description" content={post.meta_description || post.excerpt || post.title} />
-                {post.meta_keywords && <meta name="keywords" content={post.meta_keywords} />}
-                {post.canonical_url && <link rel="canonical" href={post.canonical_url} />}
-                
-                {/* Open Graph / Facebook */}
-                <meta property="og:type" content="article" />
-                <meta property="og:title" content={post.meta_title || post.title} />
-                <meta property="og:description" content={post.meta_description || post.excerpt} />
-                {post.image && <meta property="og:image" content={post.image} />}
-            </Head>
+            <SeoHead title={post.meta_title || `${post.title} | Xplore Lanka`} description={post.meta_description || post.excerpt || post.title} image={post.image} type="article" canonical={post.canonical_url || undefined} keywords={post.meta_keywords} schema={postSchema} />
             <Navbar currentPath="/blog" />
 
             <main className="flex-grow py-12 container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl space-y-10">

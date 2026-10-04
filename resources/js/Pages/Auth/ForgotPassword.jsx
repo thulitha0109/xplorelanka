@@ -1,6 +1,7 @@
 import React from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { Compass, CheckCircle2, AlertCircle, Send } from 'lucide-react';
+import SeoHead from '../../Components/SeoHead';
 
 export default function ForgotPassword() {
     const { flash } = usePage().props;
@@ -16,7 +17,7 @@ export default function ForgotPassword() {
 
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
-            <Head title="Forgot Password - Xplor Lanka" />
+            <SeoHead title="Forgot Password | Xplore Lanka" description="Request a password reset for your Xplore Lanka account." noIndex />
 
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

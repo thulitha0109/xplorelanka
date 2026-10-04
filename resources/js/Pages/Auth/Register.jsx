@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, UserPlus, Compass, CheckCircle2, AlertCircle } from 'lucide-react';
+import SeoHead from '../../Components/SeoHead';
 
 export default function Register() {
     const { flash } = usePage().props;
@@ -21,7 +22,7 @@ export default function Register() {
 
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-12 relative overflow-hidden">
-            <Head title="Create Account — Xplor Lanka" />
+            <SeoHead title="Create an Account | Xplore Lanka" description="Create a customer account for Xplore Lanka." noIndex />
 
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

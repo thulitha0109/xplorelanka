@@ -1,8 +1,9 @@
 import React from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import { Car, Building2, Users, CheckCircle2, MessageCircle, Sparkles, ShieldCheck } from 'lucide-react';
+import SeoHead from '../Components/SeoHead';
 
 export default function Partner() {
     const { flash } = usePage().props;
@@ -25,7 +26,11 @@ export default function Partner() {
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
-            <Head title="Become a Partner - Driver & Hotelier Onboarding - Xplor Lanka" />
+            <SeoHead
+                title="Partner with Xplore Lanka | Sri Lanka Tourism Network"
+                description="Join Xplore Lanka’s local travel network as a Sri Lankan driver, guide, accommodation host or activity provider. Submit a partner application."
+                schema={{ '@context': 'https://schema.org', '@type': 'WebPage', name: 'Become an Xplore Lanka Partner', about: { '@id': 'https://xplorelanka.com/#organization' } }}
+            />
             <Navbar currentPath="/partner" />
 
             {flash?.success && (

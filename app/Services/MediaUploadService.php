@@ -63,10 +63,12 @@ class MediaUploadService
                 $url = asset('storage/' . $relativePath);
             }
         } catch (\Throwable $e) {
-            Log::warning("Storage on disk '{$disk}' failed ({$e->getMessage()}), falling back to public disk.");
-            $disk = 'public';
-            Storage::disk('public')->put($relativePath, file_get_contents($file->getRealPath()), 'public');
-            $url = asset('storage/' . $relativePath);
+            Log::error("Media upload failed on disk '{$disk}': {$e->getMessage()}", [
+                'path' => $relativePath,
+                'exception' => $e,
+            ]);
+
+            throw $e;
         }
 
         return [

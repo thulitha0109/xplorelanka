@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { 
     MapPin, Star, Clock, Users, Zap, Filter, SlidersHorizontal, 
     CheckCircle2, ChevronDown, X, ArrowRight, Globe, Tag, Search,
@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import { formatProductPrice } from '../lib/currency';
+import SeoHead from '../Components/SeoHead';
 
 const CATEGORIES = [
     { key: 'all',       name: 'All Tours',          icon: Globe },
@@ -18,7 +20,7 @@ const CATEGORIES = [
     { key: 'day',       name: 'Day Excursions',     icon: Sun },
 ];
 
-function TourCard({ tour }) {
+function TourCard({ tour, currency }) {
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tour.route || tour.title + ' Sri Lanka')}`;
 
     return (
@@ -26,7 +28,7 @@ function TourCard({ tour }) {
             {/* Image */}
             <Link href={`/tours/${tour.id}`} className="block relative h-52 overflow-hidden bg-slate-100">
                 <img 
-                    src={tour.image || 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?q=80&w=800&auto=format&fit=crop'} 
+                    src={tour.image || '/images/legacy/tour-1.jpg'}
                     alt={tour.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -95,7 +97,7 @@ function TourCard({ tour }) {
                 <div>
                     <div className="text-[11px] font-medium text-slate-400">Starting from</div>
                     <div className="text-base font-black text-amber-600">
-                        LKR {Number(tour.price_lkr).toLocaleString()}
+                        {formatProductPrice(tour, currency, 'package')}
                     </div>
                 </div>
                 <Link
@@ -111,7 +113,7 @@ function TourCard({ tour }) {
 }
 
 export default function Tours({ tours = [], currentCategory = 'all' }) {
-    const { flash } = usePage().props;
+    const { flash, currency } = usePage().props;
     const [selectedCategory, setSelectedCategory] = useState(currentCategory);
     const [search, setSearch] = useState('');
 
@@ -127,7 +129,11 @@ export default function Tours({ tours = [], currentCategory = 'all' }) {
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-            <Head title="Sri Lanka Tour Packages & Bespoke Private Itineraries — Xplor Lanka" />
+            <SeoHead
+                title="Sri Lanka Tour Packages & Private Day Trips | Xplore Lanka"
+                description="Browse custom Sri Lanka tour packages, Kandy day tours, cultural heritage visits, cycling adventures and private transfers from a Kandy-based local team."
+                schema={{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Sri Lanka Tours', description: 'Tour packages, day trips and cycling experiences across Sri Lanka.', mainEntity: { '@type': 'ItemList', itemListElement: tours.slice(0, 20).map((tour, index) => ({ '@type': 'ListItem', position: index + 1, name: tour.title, url: `https://xplorelanka.com/tours/${tour.id}` })) } }}
+            />
             <Navbar currentPath="/tours" />
 
             {flash?.success && (
@@ -189,7 +195,7 @@ export default function Tours({ tours = [], currentCategory = 'all' }) {
                 {/* Tours Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredTours.map((tour) => (
-                        <TourCard key={tour.id} tour={tour} />
+                        <TourCard key={tour.id} tour={tour} currency={currency?.code || 'USD'} />
                     ))}
                 </div>
 

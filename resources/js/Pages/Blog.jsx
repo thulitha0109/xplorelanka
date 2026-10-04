@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import { Calendar, User, ArrowRight, Clock, Sparkles, Search, Tag } from 'lucide-react';
+import SeoHead from '../Components/SeoHead';
 
 export default function Blog({ posts = [], categories = [], currentCategory = 'all', searchQuery = '' }) {
     const [selectedCategory, setSelectedCategory] = useState(currentCategory);
@@ -16,10 +17,11 @@ export default function Blog({ posts = [], categories = [], currentCategory = 'a
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
-            <Head>
-                <title>Sri Lanka Travel Blog, Itineraries & Insider Guides | Xplor Lanka</title>
-                <meta name="description" content="Discover expert Sri Lanka travel guides, scenic train advice, wildlife safari tips, and packing essentials from local Ceylon tour experts." />
-            </Head>
+            <SeoHead
+                title="Sri Lanka Travel Guides, Culture & Outdoor Stories | Xplore Lanka"
+                description="Read local Sri Lanka destination guides, Kandy culture stories, wildlife conservation articles and practical tips from Xplore Lanka."
+                schema={{ '@context': 'https://schema.org', '@type': 'Blog', name: 'Xplore Lanka Travel Journal', description: 'Sri Lanka travel guides, culture and outdoor stories.', publisher: { '@id': 'https://xplorelanka.com/#organization' } }}
+            />
             <Navbar currentPath="/blog" />
 
             <main className="flex-grow py-12 container mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,7 +60,7 @@ export default function Blog({ posts = [], categories = [], currentCategory = 'a
                             <div>
                                 <Link href={`/blog/${post.slug}`} className="block h-52 overflow-hidden bg-slate-100 relative">
                                     <img 
-                                        src={post.image || 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=800&q=80'} 
+                                        src={post.image || '/images/legacy/blog-default.jpg'}
                                         alt={post.title} 
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                                     />

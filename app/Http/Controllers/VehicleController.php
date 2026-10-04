@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Partner;
 use App\Models\Review;
 use App\Models\Vehicle;
+use App\Services\CatalogPricingService;
+use App\Services\CurrencyPreferenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,7 +21,7 @@ class VehicleController extends Controller
         $category = $request->query('category');
         $partnerId = $request->query('partner_id');
 
-        $query = Vehicle::with('partner')->where('is_available', true);
+        $query = Vehicle::with(['partner', 'catalogPrices'])->where('is_available', true);
 
         if ($category && $category !== 'all') {
             $query->where('vehicle_category', $category);
@@ -54,31 +56,41 @@ class VehicleController extends Controller
      */
     public function estimateQuote(Request $request): JsonResponse
     {
-        $vehicleId = $request->input('vehicle_id');
-        $distanceKm = (float) $request->input('distance_km', 100);
-        $days = (int) $request->input('days', 1);
+        $validated = $request->validate([
+            'vehicle_id' => ['required', 'exists:vehicles,id'],
+            'distance_km' => ['nullable', 'numeric', 'min:0', 'max:5000'],
+            'days' => ['nullable', 'integer', 'min:1', 'max:60'],
+        ]);
 
-        $vehicle = Vehicle::find($vehicleId);
-        if (!$vehicle) {
-            return response()->json(['success' => false, 'message' => 'Vehicle not found.'], 404);
+        $currency = app(CurrencyPreferenceService::class)->defaultCurrency($request);
+        $vehicle = Vehicle::with('catalogPrices')->findOrFail($validated['vehicle_id']);
+        $priceFor = fn (string $unit) => $vehicle->catalogPrices->first(
+            fn ($price) => $price->unit === $unit && $price->currency === $currency && $price->is_active
+        );
+        $perKmPrice = $priceFor('per_km');
+        $dailyPrice = $priceFor('day');
+
+        if (! $perKmPrice || ! $dailyPrice) {
+            return response()->json(['success' => false, 'message' => 'A current quote is required for this vehicle.'], 422);
         }
 
-        $perKmRate = (float) preg_replace('/[^0-9.]/', '', $vehicle->rate_per_km) ?: 120;
-        $dailyRate = (float) $vehicle->daily_rate_lkr ?: ($perKmRate * 100);
-
-        // Calculate based on distance or days
-        $distanceCost = $distanceKm * $perKmRate;
-        $timeCost = $days * $dailyRate;
-        $estimatedTotal = max($distanceCost, $timeCost);
+        $distanceKm = (float) ($validated['distance_km'] ?? 100);
+        $days = (int) ($validated['days'] ?? 1);
+        $perKmRate = $perKmPrice->amount_minor / 100;
+        $dailyRate = $dailyPrice->amount_minor / 100;
+        $estimatedTotal = max($distanceKm * $perKmRate, $days * $dailyRate);
+        $estimatedMinor = (int) round($estimatedTotal * 100);
 
         return response()->json([
             'success'          => true,
             'vehicle'          => $vehicle->name,
             'distance_km'      => $distanceKm,
             'days'             => $days,
+            'currency'         => $currency,
             'rate_per_km'      => $perKmRate,
-            'daily_rate_lkr'   => $dailyRate,
-            'estimated_total'  => round($estimatedTotal, 2),
+            'daily_rate'       => $dailyRate,
+            'estimated_total'  => $estimatedMinor / 100,
+            'estimated_total_minor' => $estimatedMinor,
         ]);
     }
 
@@ -97,8 +109,12 @@ class VehicleController extends Controller
             'transmission'     => 'nullable|string',
             'fuel_type'        => 'nullable|string',
             'rate_per_km'      => 'required|string',
+            'per_km_usd'       => 'nullable|numeric|min:0',
+            'per_km_eur'       => 'nullable|numeric|min:0',
             'base_rate_lkr'    => 'nullable|numeric',
             'daily_rate_lkr'   => 'nullable|numeric',
+            'daily_rate_usd'   => 'nullable|numeric|min:0',
+            'daily_rate_eur'   => 'nullable|numeric|min:0',
             'pricing_tiers'    => 'nullable|array',
             'icon'             => 'nullable|string',
             'image'            => 'nullable|string',
@@ -110,7 +126,15 @@ class VehicleController extends Controller
             'fleet_count'      => 'nullable|integer',
         ]);
 
-        Vehicle::create($validated);
+        $prices = array_intersect_key($validated, array_flip(['per_km_usd', 'per_km_eur', 'daily_rate_usd', 'daily_rate_eur']));
+        unset($validated['per_km_usd'], $validated['per_km_eur'], $validated['daily_rate_usd'], $validated['daily_rate_eur']);
+        $vehicle = Vehicle::create($validated);
+        $pricing = app(CatalogPricingService::class);
+        $pricing->syncFromModel($vehicle);
+        $pricing->sync($vehicle, [
+            'per_km' => ['usd' => $prices['per_km_usd'] ?? null, 'eur' => $prices['per_km_eur'] ?? null],
+            'day' => ['lkr' => $vehicle->daily_rate_lkr, 'usd' => $prices['daily_rate_usd'] ?? null, 'eur' => $prices['daily_rate_eur'] ?? null],
+        ]);
 
         return redirect()->back()->with('success', 'Vehicle fleet type added successfully.');
     }
@@ -132,8 +156,12 @@ class VehicleController extends Controller
             'transmission'     => 'nullable|string',
             'fuel_type'        => 'nullable|string',
             'rate_per_km'      => 'required|string',
+            'per_km_usd'       => 'nullable|numeric|min:0',
+            'per_km_eur'       => 'nullable|numeric|min:0',
             'base_rate_lkr'    => 'nullable|numeric',
             'daily_rate_lkr'   => 'nullable|numeric',
+            'daily_rate_usd'   => 'nullable|numeric|min:0',
+            'daily_rate_eur'   => 'nullable|numeric|min:0',
             'pricing_tiers'    => 'nullable|array',
             'icon'             => 'nullable|string',
             'image'            => 'nullable|string',
@@ -145,7 +173,16 @@ class VehicleController extends Controller
             'fleet_count'      => 'nullable|integer',
         ]);
 
+        $prices = array_intersect_key($validated, array_flip(['per_km_usd', 'per_km_eur', 'daily_rate_usd', 'daily_rate_eur']));
+        unset($validated['per_km_usd'], $validated['per_km_eur'], $validated['daily_rate_usd'], $validated['daily_rate_eur']);
         $vehicle->update($validated);
+        $vehicle->refresh();
+        $pricing = app(CatalogPricingService::class);
+        $pricing->syncFromModel($vehicle);
+        $pricing->sync($vehicle, [
+            'per_km' => ['usd' => $prices['per_km_usd'] ?? null, 'eur' => $prices['per_km_eur'] ?? null],
+            'day' => ['lkr' => $vehicle->daily_rate_lkr, 'usd' => $prices['daily_rate_usd'] ?? null, 'eur' => $prices['daily_rate_eur'] ?? null],
+        ]);
 
         return redirect()->back()->with('success', 'Vehicle updated successfully.');
     }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, Compass, CheckCircle2, AlertCircle, Save } from 'lucide-react';
+import SeoHead from '../../Components/SeoHead';
 
 export default function ResetPassword({ token, email }) {
     const { flash } = usePage().props;
@@ -20,7 +21,7 @@ export default function ResetPassword({ token, email }) {
 
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
-            <Head title="Reset Password - Xplor Lanka" />
+            <SeoHead title="Reset Password | Xplore Lanka" description="Choose a new password for your Xplore Lanka account." noIndex />
 
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />

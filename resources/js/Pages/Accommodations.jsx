@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import { MapPin, Star, Bed, Wifi, Coffee, MessageCircle, ShieldCheck, PenLine, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
+import { formatProductPrice } from '../lib/currency';
+import SeoHead from '../Components/SeoHead';
 
 export default function Accommodations({ accommodations = [], partners = [], currentCategory = 'all' }) {
+    const { currency } = usePage().props;
     const [selectedCategory, setSelectedCategory] = useState(currentCategory);
 
     const categories = [
@@ -22,7 +25,11 @@ export default function Accommodations({ accommodations = [], partners = [], cur
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
-            <Head title="Handpicked Eco Lodges, Boutique Villas & Tea Bungalows - Xplor Lanka" />
+            <SeoHead
+                title="Sri Lanka Eco Lodges, Cabins & Boutique Stays | Xplore Lanka"
+                description="Explore handpicked eco lodges, cabins and boutique stays across Sri Lanka, with locally curated accommodation options from Xplore Lanka."
+                schema={{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Sri Lanka Accommodations', description: 'Curated lodges and boutique stays in Sri Lanka.' }}
+            />
             <Navbar currentPath="/accommodations" />
 
             <main className="flex-grow py-12 container mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,7 +68,7 @@ export default function Accommodations({ accommodations = [], partners = [], cur
                             <div>
                                 <div className="h-56 relative overflow-hidden bg-slate-100">
                                     <img
-                                        src={acc.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80'}
+                                        src={acc.image || '/images/legacy/stay-default.jpg'}
                                         alt={acc.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
@@ -117,7 +124,7 @@ export default function Accommodations({ accommodations = [], partners = [], cur
                                 <div>
                                     <span className="text-[10px] font-medium text-slate-400">Starting from</span>
                                     <div className="text-lg font-black text-amber-600">
-                                        LKR {Number(acc.price_lkr).toLocaleString()}
+                                        {formatProductPrice(acc, currency?.code || 'USD', 'night')}
                                         <span className="text-xs font-normal text-slate-400"> / {acc.period || 'night'}</span>
                                     </div>
                                 </div>

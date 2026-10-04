@@ -16,6 +16,7 @@ class Booking extends Model
         'customer_email',
         'customer_phone',
         'country',
+        'country_code',
         'tour_id',
         'pickup_location',
         'dropoff_location',
@@ -24,6 +25,10 @@ class Booking extends Model
         'guests_count',
         'vehicle_type',
         'total_price',
+        'currency',
+        'quoted_total_minor',
+        'price_snapshot',
+        'payment_status',
         'status',
         'notes',
     ];
@@ -32,10 +37,17 @@ class Booking extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'total_price' => 'decimal:2',
+        'quoted_total_minor' => 'integer',
+        'price_snapshot' => 'array',
     ];
 
     public function tour()
     {
         return $this->belongsTo(Tour::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

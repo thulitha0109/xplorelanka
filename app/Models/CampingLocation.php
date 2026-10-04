@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class CampingLocation extends Model
 {
     use HasFactory;
+    use Concerns\HasCatalogPrices;
 
     protected $fillable = [
         'title',

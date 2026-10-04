@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Partner;
 use App\Models\Tour;
+use App\Services\CatalogPricingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,24 +20,25 @@ class TourController extends Controller
         $maxPrice    = $request->query('max_price');
         $difficulty  = $request->query('difficulty');
 
-        $query = Tour::where('is_active', true);
+        $currency = app(\App\Services\CurrencyPreferenceService::class)->defaultCurrency($request);
+        $query = Tour::with('catalogPrices')->where('is_active', true);
 
         if ($category && $category !== 'all') {
             $query->where('category', $category);
         }
         if ($minPrice) {
-            $query->where('price_lkr', '>=', $minPrice);
+            $query->whereHas('catalogPrices', fn ($prices) => $prices->where('unit', 'package')->where('currency', $currency)->where('amount_minor', '>=', round((float) $minPrice * 100)));
         }
         if ($maxPrice) {
-            $query->where('price_lkr', '<=', $maxPrice);
+            $query->whereHas('catalogPrices', fn ($prices) => $prices->where('unit', 'package')->where('currency', $currency)->where('amount_minor', '<=', round((float) $maxPrice * 100)));
         }
         if ($difficulty) {
             $query->where('difficulty', $difficulty);
         }
 
         match ($sort) {
-            'price_asc'  => $query->orderBy('price_lkr', 'asc'),
-            'price_desc' => $query->orderBy('price_lkr', 'desc'),
+            'price_asc'  => $query->withMin(['catalogPrices as selected_price_minor' => fn ($prices) => $prices->where('unit', 'package')->where('currency', $currency)], 'amount_minor')->orderBy('selected_price_minor'),
+            'price_desc' => $query->withMin(['catalogPrices as selected_price_minor' => fn ($prices) => $prices->where('unit', 'package')->where('currency', $currency)], 'amount_minor')->orderByDesc('selected_price_minor'),
             'rating'     => $query->orderBy('rating', 'desc'),
             'newest'     => $query->orderBy('created_at', 'desc'),
             default      => $query->orderBy('is_featured', 'desc')->orderBy('rating', 'desc'),
@@ -89,6 +91,7 @@ class TourController extends Controller
             'duration'       => 'required|string',
             'price_lkr'      => 'required|numeric',
             'price_usd'      => 'nullable|numeric',
+            'price_eur'      => 'nullable|numeric|min:0',
             'description'    => 'nullable|string',
             'highlights'     => 'nullable|array',
             'itinerary'      => 'nullable|array',
@@ -107,7 +110,10 @@ class TourController extends Controller
             'is_active'      => 'boolean',
         ]);
 
-        Tour::create($validated);
+        $priceEur = $validated['price_eur'] ?? null;
+        unset($validated['price_eur']);
+        $tour = Tour::create($validated);
+        app(CatalogPricingService::class)->sync($tour, ['package' => ['lkr' => $tour->price_lkr, 'usd' => $tour->price_usd, 'eur' => $priceEur]]);
 
         return redirect()->route('admin.dashboard')->with('success', 'Tour created successfully!');
     }
@@ -123,6 +129,7 @@ class TourController extends Controller
             'duration'       => 'required|string',
             'price_lkr'      => 'required|numeric',
             'price_usd'      => 'nullable|numeric',
+            'price_eur'      => 'nullable|numeric|min:0',
             'description'    => 'nullable|string',
             'highlights'     => 'nullable|array',
             'itinerary'      => 'nullable|array',
@@ -141,7 +148,10 @@ class TourController extends Controller
             'is_active'      => 'boolean',
         ]);
 
+        $priceEur = $validated['price_eur'] ?? null;
+        unset($validated['price_eur']);
         $tour->update($validated);
+        app(CatalogPricingService::class)->sync($tour->refresh(), ['package' => ['lkr' => $tour->price_lkr, 'usd' => $tour->price_usd, 'eur' => $priceEur]]);
 
         return redirect()->route('admin.dashboard')->with('success', 'Tour updated successfully!');
     }

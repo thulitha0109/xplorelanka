@@ -1,13 +1,14 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import Navbar from '../../Components/Navbar';
 import Footer from '../../Components/Footer';
+import SeoHead from '../../Components/SeoHead';
 import { User, Calendar, MessageSquare, MapPin, Clock, Star, ExternalLink, Settings } from 'lucide-react';
 
 export default function UserDashboard({ user, bookings = [], reviews = [] }) {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans">
-            <Head title="My Account - Xplor Lanka" />
+            <SeoHead title="My Account | Xplore Lanka" description="Private Xplore Lanka customer account." noIndex />
             <Navbar />
 
             <main className="flex-grow py-12 container mx-auto px-4 max-w-6xl space-y-8">

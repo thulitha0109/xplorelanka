@@ -3,6 +3,10 @@
 .env
 .env.backup
 .env.production
+.env.staging
+.deploy-tag-*
+.backups/
+deploy-*.log
 .phpactor.json
 .phpunit.result.cache
 /.codex

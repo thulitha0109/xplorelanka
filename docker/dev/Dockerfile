@@ -43,9 +43,13 @@ RUN groupadd -g ${GID} devuser 2>/dev/null || true \
 # Set working directory
 WORKDIR /var/www
 
+USER devuser
+
 # Copy entrypoint script
 COPY docker/dev/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+USER root
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER devuser
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

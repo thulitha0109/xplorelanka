@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import Navbar from '../../Components/Navbar';
 import Footer from '../../Components/Footer';
 import MediaUploader from '../../Components/MediaUploader';
 import MapLocationPicker from '../../Components/MapLocationPicker';
+import SeoHead from '../../Components/SeoHead';
 import { 
     Save, ArrowLeft, Image as ImageIcon, MapPin, 
     List, Settings, Video, FileText, Navigation, Tag, Crosshair
@@ -21,6 +22,7 @@ export default function TourForm({ tour, isEdit }) {
         duration: tour?.duration || '',
         price_lkr: tour?.price_lkr || '',
         price_usd: tour?.price_usd || '',
+        price_eur: tour?.prices?.package?.EUR?.amount || '',
         difficulty: tour?.difficulty || 'easy',
         max_group_size: tour?.max_group_size || 15,
         is_featured: tour?.is_featured ?? false,
@@ -92,7 +94,7 @@ export default function TourForm({ tour, isEdit }) {
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-            <Head title={isEdit ? `Edit Tour: ${tour.title}` : 'Create New Tour'} />
+            <SeoHead title={isEdit ? `Edit Tour: ${tour.title} | Xplore Lanka` : 'Create Tour | Xplore Lanka'} description="Private Xplore Lanka tour administration page." noIndex />
             <Navbar />
 
             <main className="flex-grow py-8 container mx-auto px-4 max-w-6xl">
@@ -188,6 +190,10 @@ export default function TourForm({ tour, isEdit }) {
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold uppercase text-slate-700">Price USD (optional)</label>
                                         <input type="number" value={data.price_usd} onChange={e => setData('price_usd', e.target.value)} className="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase text-slate-700">Price EUR (optional)</label>
+                                        <input type="number" min="0" step="0.01" value={data.price_eur} onChange={e => setData('price_eur', e.target.value)} className="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white" />
                                     </div>
 
                                     <div className="space-y-1.5">
