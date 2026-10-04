@@ -11,7 +11,7 @@ Host Nginx serves files from the checked-out release's `public/` directory, incl
 ## One-time server setup
 
 1. Provision a Linux server with Docker Engine/Compose v2, Git, Nginx, Certbot, OpenSSL, and `curl`. Allow inbound TCP 80/443; keep PostgreSQL/Redis private. Point both `xplorelanka.com` and `www.xplorelanka.com` DNS records at the server.
-2. Clone the production branch to `/srv/xplorelanka`. For staging, use a separate checkout at `/srv/xplorelanka-staging` and the `stag` branch. The paths in the supplied Nginx configs must match the checkout locations. The deployment scripts also support `APP_DIR=/path/to/checkout`.
+2. The current production checkout is `/home/thulitha/docker/xplorelanka` (the supplied production Nginx config uses that path). For another server, clone the production branch and update the Nginx document root to `<checkout>/public`. For staging, use a separate checkout and update its Nginx root to that checkout's `public/`. The deployment scripts also support `APP_DIR=/path/to/checkout`.
 3. Create the environment file and generated Laravel/database secrets:
 
    `bash deploy/setup-env.sh production`

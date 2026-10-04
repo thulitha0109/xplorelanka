@@ -10,8 +10,8 @@ services:
     restart: "no"
     working_dir: /var/www
     ports:
-      - "8000:8000"
-      - "5173:5173"
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:5173:5173"
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-${MINIO_ROOT_USER:-xplore_minio}}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-${MINIO_ROOT_PASSWORD:-xplore_secret_key}}
