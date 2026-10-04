@@ -91,10 +91,9 @@ export default function Footer() {
                             rel="noopener noreferrer" 
                             className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-amber-400 text-slate-700 hover:text-amber-700 transition-all group"
                         >
-                            <span className="w-4 h-4 rounded bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black text-[9px] flex items-center justify-center shadow group-hover:scale-105 transition-transform">
+                            <span className="w-4 h-4 rounded text-slate-950 font-black text-[9px] flex items-center justify-center shadow group-hover:scale-105 transition-transform">
                                 ILU
                             </span>
-                            <span className="font-semibold text-xs tracking-tight">Ilu</span>
                         </a>
                     </div>
                 </div>
