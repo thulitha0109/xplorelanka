@@ -12,16 +12,23 @@ services:
     ports:
       - "8000:8000"
       - "5173:5173"
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-${MINIO_ROOT_USER:-xplore_minio}}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-${MINIO_ROOT_PASSWORD:-xplore_secret_key}}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-http://minio:9000}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-true}
+      AWS_BUCKET: ${AWS_BUCKET:-xplorelanka}
     volumes:
       - ./:/var/www
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    command: ["sh", "-lc", "php docker/dev/init-minio.php && exec php artisan serve --host=0.0.0.0 --port=8000"]
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
+      minio:
+        condition: service_started
     networks:
       - xplorelanka
 
@@ -34,7 +41,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-xplorelanka}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - xplorelanka_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -50,7 +57,7 @@ services:
     container_name: xplorelanka_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - xplorelanka_redis_data:/data
     healthcheck:
@@ -112,37 +119,14 @@ services:
     container_name: xplorelanka_minio
     restart: unless-stopped
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-xplore_minio}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-xplore_secret_key}
     volumes:
       - xplorelanka_minio_data:/data
     command: server /data --console-address ":9001"
-    networks:
-      - xplorelanka
-
-  minio-init:
-    build:
-      context: .
-      dockerfile: docker/dev/Dockerfile
-    container_name: xplorelanka_minio_init
-    depends_on:
-      minio:
-        condition: service_started
-    environment:
-      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-xplore_minio}
-      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-xplore_secret_key}
-      AWS_ENDPOINT: http://minio:9000
-      AWS_DEFAULT_REGION: us-east-1
-      AWS_USE_PATH_STYLE_ENDPOINT: "true"
-      AWS_BUCKET: ${AWS_BUCKET:-xplorelanka}
-    volumes:
-      - ./:/var/www
-    working_dir: /var/www
-    command: php docker/dev/init-minio.php
-    restart: "no"
     networks:
       - xplorelanka
 

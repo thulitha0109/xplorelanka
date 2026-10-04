@@ -39,7 +39,9 @@ Keep migrations backward-compatible (expand/contract) so the prior code image re
 
 ## Local development
 
-For a fresh checkout, install the bind-mounted PHP/JS dependencies (`composer install` and `npm ci`) and create `.env` from `.env.example`, then run `docker compose up -d --build`. The development stack uses [docker/dev/Dockerfile](docker/dev/Dockerfile), runs as the host-matched non-root user, and initializes a public-read MinIO bucket using the already-installed AWS SDK. `.env.example` contains local-only credentials; keep `AWS_ENDPOINT=http://minio:9000`, path-style addressing, and the browser-facing URL aligned with your host ports. The production build uses [docker/prod/Dockerfile](docker/prod/Dockerfile), deterministic `npm ci`, and the Composer lockfile. Do not use development Compose or `dev-build.sh --fresh` against production data.
+For a fresh development checkout, create `.env` from `.env.example`, then install bind-mounted dependencies with `docker compose run --rm app composer install` and `docker compose run --rm app npm ci`. The app service does not depend on MinIO initialization during these commands: `docker/dev/init-minio.php` needs the AWS SDK supplied by Composer, so regular app startup initializes the public-read bucket after dependencies exist. Then run `docker compose up -d --build`. The development stack uses [docker/dev/Dockerfile](docker/dev/Dockerfile), runs as the host-matched non-root user, and binds database, Redis, and MinIO host ports to loopback. `.env.example` contains local-only credentials; keep `AWS_ENDPOINT=http://minio:9000`, path-style addressing, and the browser-facing URL aligned with your host ports.
+
+**Production servers must not use the default `docker-compose.yml` or run `docker compose run app composer install`.** Those are development-only commands (artisan serve, MinIO, and host ports). On a server deploy using `./deploy/prod.sh` or `./deploy/staging.sh`; the production image installs the locked Composer dependencies and frontend assets during its build.
 
 ## Runtime and storage notes
 
