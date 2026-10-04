@@ -27,9 +27,9 @@ The Nginx server blocks are deliberately **not** installed or managed by Docker 
 
 Run from the matching checkout after committing code to the remote branch:
 
-- Production: `bash deploy/prod.sh` (default branch `main`)
+- Production: `bash deploy/prod.sh` (default branch `stag` in this repository; override with `--branch NAME` or `PRODUCTION_BRANCH=NAME`)
 - Staging: `bash deploy/staging.sh` (default branch `stag`)
-- Select a branch: `bash deploy/prod.sh --branch main`
+- Select a branch: `bash deploy/prod.sh --branch stag`
 - Deploy a known commit: `bash deploy/prod.sh --revision <commit>`
 - Seed staging content, only when intentionally needed: `bash deploy/staging.sh --seed`
 

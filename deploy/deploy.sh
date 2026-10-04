@@ -22,7 +22,7 @@ case "$ENVIRONMENT" in
         COMPOSE_FILE=docker-compose.prod.yml
         ENV_FILE_NAME=.env.production
         IMAGE_REPOSITORY=xplorelanka/app-production
-        DEFAULT_BRANCH=main
+        DEFAULT_BRANCH=${PRODUCTION_BRANCH:-stag}
         DEFAULT_HEALTH_URL=https://xplorelanka.com/up
         ;;
     staging)
@@ -104,6 +104,12 @@ if [[ -n "$REVISION" ]]; then
     git cat-file -e "$REVISION^{commit}" 2>/dev/null || fail "Unknown Git revision: $REVISION"
     git checkout --detach "$REVISION"
 else
+    if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+        printf 'ERROR: remote branch %q does not exist on origin. Available branches:\n' "$BRANCH" >&2
+        git ls-remote --heads origin | sed 's#^.\{40\}[[:space:]]*refs/heads/##' >&2 || true
+        printf 'Choose a listed branch with --branch NAME, or set DEPLOY_BRANCH.\n' >&2
+        exit 1
+    fi
     git fetch --tags origin "$BRANCH"
     if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
         git checkout "$BRANCH"
