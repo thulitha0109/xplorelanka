@@ -54,10 +54,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/write-review/{tour_id?}', [ReviewController::class, 'create'])->name('reviews.create');
     Route::get('/reviews/{id}/edit',        [ReviewController::class, 'edit'])->name('reviews.edit');
     Route::put('/reviews/{id}',             [ReviewController::class, 'update'])->name('reviews.update');
-});
 
-// ── Media Upload Endpoints (Device Uploads to MinIO / Storage) ─────────────────
-Route::post('/media/upload',       [MediaController::class, 'upload'])->name('media.upload');
+    // User Media Upload (Reviews / User uploads to MinIO)
+    Route::post('/media/upload',            [MediaController::class, 'upload'])->name('media.upload')->middleware('throttle:30,1');
+});
 
 // ── Public Pages ───────────────────────────────────────────────────────────────
 Route::get('/', function () {

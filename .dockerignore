@@ -1,24 +1,40 @@
+# Version control
 .git
 .github
+
+# Node / PHP dependencies (rebuilt inside the image)
 node_modules
 vendor
+
+# Laravel runtime / writable directories
 storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
 storage/inertia-devtools
-bootstrap/cache/*.php
-.env
-.env.*
-!.env.example
-npm-debug.log
-.DS_Store
-.idea
-.vscode
-public/build
-public/hot
 storage/app/public/**
 storage/logs/**
 storage/framework/**
+
+# PHP-FPM bootstrap cache
+bootstrap/cache/*.php
+
+# Compiled frontend assets (built inside the image)
+public/build
+public/hot
+
+# Environment files
+.env
+.env.*
+
+# Deployment artefacts
 .backups
-deploy-*.log
+deploy.log
+.deploy-tag
+.proxy-configured
+
+# Editor / OS junk
+.DS_Store
+.idea
+.vscode
+npm-debug.log

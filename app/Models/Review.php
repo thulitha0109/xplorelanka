@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Review extends Model
 {
     use HasFactory;
+    use Concerns\HasMediaCleanup;
+
+    protected array $mediaFields = ['media_urls'];
 
     protected $fillable = [
         'tour_id',

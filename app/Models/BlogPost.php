@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class BlogPost extends Model
 {
     use HasFactory;
+    use Concerns\HasMediaCleanup;
+
+    protected array $mediaFields = ['image'];
 
     protected $fillable = [
         'title',

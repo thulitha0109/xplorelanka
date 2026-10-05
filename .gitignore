@@ -1,14 +1,15 @@
+# Logs
 *.log
+
+# OS / Editor
 .DS_Store
-.env
-.env.backup
-.env.production
-.env.staging
-.deploy-tag-*
-.backups/
-deploy-*.log
+Thumbs.db
+Homestead.json
+Homestead.yaml
+_ide_helper.php
 .phpactor.json
-.phpunit.result.cache
+
+# IDE configs
 /.codex
 /.cursor/
 /.idea
@@ -17,15 +18,26 @@ deploy-*.log
 /.vscode
 /.zed
 /auth.json
-/node_modules
+
+# Laravel runtime
+.env
+.env.backup
 /public/build
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
+
+# PHP
 /vendor
-_ide_helper.php
-Homestead.json
-Homestead.yaml
-Thumbs.db
+.phpunit.result.cache
+
+# Node
+/node_modules
+
+# Deployment artefacts (server-side only)
+.deploy-tag
+.proxy-configured
+.backups/
+deploy.log
