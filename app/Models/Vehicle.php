@@ -11,6 +11,9 @@ class Vehicle extends Model
 {
     use HasFactory;
     use Concerns\HasCatalogPrices;
+    use Concerns\HasMediaCleanup;
+
+    protected array $mediaFields = ['icon', 'image', 'gallery'];
 
     protected $fillable = [
         'partner_id',

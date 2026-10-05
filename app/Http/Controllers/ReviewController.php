@@ -8,6 +8,7 @@ use App\Models\Tour;
 use App\Models\Vehicle;
 use App\Services\MediaUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class ReviewController extends Controller
@@ -89,7 +90,10 @@ class ReviewController extends Controller
                     $uploaded = $this->uploadService->upload($file, 'reviews');
                     $mediaUrls[] = $uploaded['url'];
                 } catch (\Throwable $e) {
-                    // Continue with other files if one fails
+                    Log::error('ReviewController: review media file upload failed', [
+                        'filename' => $file->getClientOriginalName(),
+                        'error'    => $e->getMessage(),
+                    ]);
                 }
             }
         }
@@ -186,7 +190,11 @@ class ReviewController extends Controller
                     $uploaded = $this->uploadService->upload($file, 'reviews');
                     $mediaUrls[] = $uploaded['url'];
                 } catch (\Throwable $e) {
-                    // Continue
+                    Log::error('ReviewController: review update media file upload failed', [
+                        'review_id' => $review->id,
+                        'filename'  => $file->getClientOriginalName(),
+                        'error'     => $e->getMessage(),
+                    ]);
                 }
             }
         }

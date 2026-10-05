@@ -11,6 +11,9 @@ class Accommodation extends Model
 {
     use HasFactory;
     use Concerns\HasCatalogPrices;
+    use Concerns\HasMediaCleanup;
+
+    protected array $mediaFields = ['image', 'gallery'];
 
     protected $fillable = [
         'partner_id',

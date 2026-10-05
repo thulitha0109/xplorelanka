@@ -9,6 +9,9 @@ class Tour extends Model
 {
     use HasFactory;
     use Concerns\HasCatalogPrices;
+    use Concerns\HasMediaCleanup;
+
+    protected array $mediaFields = ['image', 'gallery', 'video_url'];
 
     protected $fillable = [
         'title',
