@@ -6,15 +6,11 @@
 node_modules
 vendor
 
-# Laravel runtime / writable directories
-storage/logs/*
-storage/framework/cache/*
-storage/framework/sessions/*
-storage/framework/views/*
-storage/inertia-devtools
-storage/app/public/**
-storage/logs/**
-storage/framework/**
+# Laravel runtime data is mounted/persistent at runtime and is owned by the
+# container's www-data user. Exclude the whole tree so Docker never tries to
+# traverse host runtime files/directories with restrictive permissions.
+storage
+public/storage
 
 # PHP-FPM bootstrap cache
 bootstrap/cache/*.php
