@@ -1,116 +1,103 @@
-# =============================================================================
-# Xplore Lanka – Unified Production Dockerfile
-# =============================================================================
-# Multi-stage build:
-#   1. composer-builder  – installs PHP dependencies and dumps optimised autoloader
-#   2. frontend-builder  – compiles Vite/React/Tailwind assets
-#   3. runtime           – hardened PHP-FPM image that serves the app
-#
-# The final image exposes PHP-FPM on port 9000.
-# A host-level reverse proxy (Nginx, Caddy, Apache, etc.) sits in front and
-# passes FastCGI requests to 127.0.0.1:9000.
-# =============================================================================
+# Multi-stage production image: locked PHP dependencies, Vite assets, PHP-FPM runtime.
+FROM php:8.4-cli-bookworm AS composer-builder
 
-# -----------------------------------------------------------------------------
-# Stage 1: Composer Dependencies
-# -----------------------------------------------------------------------------
-FROM php:8.4-cli-alpine AS composer-builder
-
-RUN apk add --no-cache --virtual .build-deps \
-        $PHPIZE_DEPS postgresql-dev libzip-dev icu-dev libpng-dev oniguruma-dev libxml2-dev \
-    && apk add --no-cache postgresql-libs libzip icu-libs libpng oniguruma libxml2 \
-    && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd zip intl \
-    && apk del .build-deps
-
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git unzip $PHPIZE_DEPS libicu-dev libonig-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libpq-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql mbstring exif pcntl bcmath gd zip intl opcache \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
 WORKDIR /app
-
-# Layer-cache: install deps before copying all source code
 COPY composer.json composer.lock ./
-RUN composer install \
-        --no-dev \
-        --no-interaction \
-        --no-scripts \
-        --no-autoloader \
-        --prefer-dist \
-        --no-progress
-
+RUN composer install --no-dev --no-interaction --no-scripts --no-autoloader --prefer-dist --no-progress
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
-# -----------------------------------------------------------------------------
-# Stage 2: Frontend Assets
-# -----------------------------------------------------------------------------
-FROM node:22-alpine AS frontend-builder
-
+FROM node:22-bookworm-slim AS frontend-builder
 WORKDIR /app
-
-# Layer-cache: install node deps before copying all source
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
-
 COPY . .
+ARG VITE_GOOGLE_MAPS_API_KEY=
+ENV VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
 RUN npm run build
 
-# -----------------------------------------------------------------------------
-# Stage 3: Production PHP-FPM Runtime
-# -----------------------------------------------------------------------------
-FROM php:8.4-fpm-alpine AS runtime
+FROM php:8.4-fpm-bookworm AS runtime
+LABEL org.opencontainers.image.title="Xplore Lanka" \
+      org.opencontainers.image.description="Laravel PHP-FPM application behind a manually managed Nginx proxy"
 
-LABEL org.opencontainers.image.title="Xplore Lanka"
-LABEL org.opencontainers.image.description="Laravel + Inertia.js PHP-FPM application"
-
-# Install runtime libraries; compile PHP extensions then strip build tools
-RUN apk add --no-cache \
-        postgresql-libs libpng libzip icu-libs oniguruma libxml2 \
-    && apk add --no-cache --virtual .build-deps \
-        $PHPIZE_DEPS postgresql-dev libpng-dev libzip-dev icu-dev oniguruma-dev libxml2-dev \
-    && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd zip intl opcache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libicu72 libonig5 libpng16-16 libjpeg62-turbo libfreetype6 libzip4 libpq5 gosu \
+        $PHPIZE_DEPS libicu-dev libonig-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libpq-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql mbstring exif pcntl bcmath gd zip intl opcache \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && apk del .build-deps \
-    # Remove the default FPM pool config and use our own
-    && rm -f /usr/local/etc/php-fpm.d/www.conf.default
-
-# PHP runtime settings
-COPY php.ini /usr/local/etc/php/conf.d/99-app.ini
-
-# PHP-FPM pool configuration (listen on 0.0.0.0:9000)
-COPY php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+    && apt-get purge -y --auto-remove $PHPIZE_DEPS libicu-dev libonig-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && printf '%s\n' \
+        '[PHP]' \
+        'memory_limit=256M' \
+        'max_execution_time=60' \
+        'upload_max_filesize=64M' \
+        'post_max_size=64M' \
+        'display_errors=Off' \
+        'display_startup_errors=Off' \
+        'log_errors=On' \
+        'error_log=/proc/self/fd/2' \
+        'expose_php=Off' \
+        '[Date]' \
+        'date.timezone=UTC' \
+        '[opcache]' \
+        'opcache.enable=1' \
+        'opcache.enable_cli=0' \
+        'opcache.memory_consumption=256' \
+        'opcache.interned_strings_buffer=16' \
+        'opcache.max_accelerated_files=20000' \
+        'opcache.validate_timestamps=0' \
+        'opcache.save_comments=1' \
+        > /usr/local/etc/php/conf.d/99-app.ini \
+    && printf '%s\n' \
+        '[www]' \
+        'user=www-data' \
+        'group=www-data' \
+        'listen=0.0.0.0:9000' \
+        'pm=dynamic' \
+        'pm.max_children=20' \
+        'pm.start_servers=4' \
+        'pm.min_spare_servers=2' \
+        'pm.max_spare_servers=8' \
+        'pm.max_requests=500' \
+        'access.log=/proc/self/fd/2' \
+        'catch_workers_output=yes' \
+        'decorate_workers_output=no' \
+        'clear_env=no' \
+        'php_admin_flag[log_errors]=on' \
+        'php_admin_value[error_log]=/proc/self/fd/2' \
+        'php_admin_value[memory_limit]=256M' \
+        > /usr/local/etc/php-fpm.d/zz-app.conf
 
 WORKDIR /var/www
-
-# Copy full application source (owned by www-data)
 COPY --chown=www-data:www-data . /var/www
-
-# Overlay compiled vendor from Stage 1
-COPY --from=composer-builder --chown=www-data:www-data /app/vendor           /var/www/vendor
+COPY --from=composer-builder --chown=www-data:www-data /app/vendor /var/www/vendor
 COPY --from=composer-builder --chown=www-data:www-data /app/bootstrap/cache/ /var/www/bootstrap/cache/
+COPY --from=frontend-builder --chown=www-data:www-data /app/public/build /var/www/public/build
 
-# Overlay compiled frontend assets from Stage 2
-COPY --from=frontend-builder --chown=www-data:www-data /app/public/build     /var/www/public/build
-
-# Ensure writable Laravel directories exist and are owned by www-data
 RUN mkdir -p \
+        /var/www/storage/app/public \
+        /var/www/storage/app/private \
         /var/www/storage/framework/cache/data \
         /var/www/storage/framework/sessions \
         /var/www/storage/framework/views \
         /var/www/storage/logs \
         /var/www/bootstrap/cache \
-    && chown -R www-data:www-data \
-        /var/www/storage \
-        /var/www/bootstrap/cache \
-    && chmod -R u+rwX,g+rwX \
-        /var/www/storage \
-        /var/www/bootstrap/cache
+    && ln -s ../storage/app/public /var/www/public/storage \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R ug+rwX,o-rwx /var/www/storage /var/www/bootstrap/cache
 
 COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-USER www-data
+RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 9000
-
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["php-fpm"]
+CMD ["php-fpm", "-F"]

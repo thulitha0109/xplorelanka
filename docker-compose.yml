@@ -1,140 +1,152 @@
 services:
   app:
+    image: ${IMAGE_NAME:-xplorelanka/app}:${IMAGE_TAG:-local}
     build:
       context: .
-      dockerfile: docker/dev/Dockerfile
+      dockerfile: Dockerfile
       args:
-        UID: 1000
-        GID: 1000
-    container_name: xplorelanka_app
-    restart: "no"
-    working_dir: /var/www
-    ports:
-      - "127.0.0.1:8000:8000"
-      - "127.0.0.1:5173:5173"
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-}
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-${MINIO_ROOT_USER:-xplore_minio}}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-${MINIO_ROOT_PASSWORD:-xplore_secret_key}}
-      AWS_ENDPOINT: ${AWS_ENDPOINT:-http://minio:9000}
-      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
-      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-true}
-      AWS_BUCKET: ${AWS_BUCKET:-xplorelanka}
+      APP_ENV: production
+      APP_DEBUG: "false"
+    ports:
+      - "${FPM_BIND:-127.0.0.1}:${FPM_PORT:-9000}:9000"
     volumes:
-      - ./:/var/www
-    command: ["sh", "-lc", "if [ ! -f vendor/autoload.php ]; then echo \"Composer dependencies missing; run: docker compose run --rm --no-deps app composer install\" >&2; exit 1; fi; php docker/dev/init-minio.php && exec php artisan serve --host=0.0.0.0 --port=8000"]
+      - "${STORAGE_PATH:-./storage}:/var/www/storage"
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
-        condition: service_started
+    healthcheck:
+      test: ["CMD", "php", "-r", "$$s=@fsockopen('127.0.0.1',9000); exit($$s ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
-      - xplorelanka
+      - private
+
+  worker:
+    image: ${IMAGE_NAME:-xplorelanka/app}:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--timeout=90"]
+    volumes:
+      - "${STORAGE_PATH:-./storage}:/var/www/storage"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - private
+
+  scheduler:
+    image: ${IMAGE_NAME:-xplorelanka/app}:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+    command: ["php", "artisan", "schedule:work"]
+    volumes:
+      - "${STORAGE_PATH:-./storage}:/var/www/storage"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - private
+
+  # Optional compatibility backend for installations using the former local
+  # MinIO setup. deploy.sh enables this profile when AWS_ENDPOINT targets it.
+  minio:
+    image: minio/minio:latest
+    profiles: ["minio"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-xplorelanka_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change-this-minio-password}
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "${MINIO_BIND:-127.0.0.1}:${MINIO_PORT:-9002}:9000"
+    volumes:
+      - xplorelanka_minio_data:/data
+    networks:
+      - private
+
+  minio-init:
+    image: minio/mc:latest
+    profiles: ["minio"]
+    env_file:
+      - .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-xplorelanka_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change-this-minio-password}
+    depends_on:
+      - minio
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do sleep 2; done
+        mc mb --ignore-existing "local/$${AWS_BUCKET}"
+        mc anonymous set download "local/$${AWS_BUCKET}"
+    networks:
+      - private
 
   db:
     image: postgres:15-alpine
-    container_name: xplorelanka_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-xplorelanka}
-      POSTGRES_USER: ${DB_USERNAME:-xplorelanka}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
-    ports:
-      - "127.0.0.1:5432:5432"
+      POSTGRES_DB: ${DB_DATABASE:?Set DB_DATABASE in .env}
+      POSTGRES_USER: ${DB_USERNAME:?Set DB_USERNAME in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - xplorelanka_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka}"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 10s
     networks:
-      - xplorelanka
+      - private
 
   redis:
-    image: redis:alpine
-    container_name: xplorelanka_redis
+    image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - xplorelanka_redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
-      timeout: 5s
-      retries: 5
+      timeout: 3s
+      retries: 12
     networks:
-      - xplorelanka
-
-  worker:
-    build:
-      context: .
-      dockerfile: docker/dev/Dockerfile
-      args:
-        UID: 1000
-        GID: 1000
-    container_name: xplorelanka_worker
-    restart: unless-stopped
-    working_dir: /var/www
-    command: php artisan queue:work redis --sleep=3 --tries=3
-    volumes:
-      - ./:/var/www
-    depends_on:
-      app:
-        condition: service_started
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - xplorelanka
-
-  scheduler:
-    build:
-      context: .
-      dockerfile: docker/dev/Dockerfile
-      args:
-        UID: 1000
-        GID: 1000
-    container_name: xplorelanka_scheduler
-    restart: unless-stopped
-    working_dir: /var/www
-    command: php artisan schedule:work
-    volumes:
-      - ./:/var/www
-    depends_on:
-      app:
-        condition: service_started
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - xplorelanka
-
-  minio:
-    image: minio/minio:latest
-    container_name: xplorelanka_minio
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-xplore_minio}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-xplore_secret_key}
-    volumes:
-      - xplorelanka_minio_data:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - xplorelanka
+      - private
 
 networks:
-  xplorelanka:
+  private:
     driver: bridge
 
 volumes:
+  # Retain the original resource names so existing Compose data volumes remain attached.
   xplorelanka_db_data:
+    name: ${COMPOSE_PROJECT_NAME:-xplorelanka}_xplorelanka_db_data
   xplorelanka_redis_data:
+    name: ${COMPOSE_PROJECT_NAME:-xplorelanka}_xplorelanka_redis_data
   xplorelanka_minio_data:
+    name: ${COMPOSE_PROJECT_NAME:-xplorelanka}_xplorelanka_minio_data
