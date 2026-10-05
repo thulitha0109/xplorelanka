@@ -1,212 +1,314 @@
 # =============================================================================
-# Xplore Lanka – docker-compose.yml
-# =============================================================================
-# Single, production-grade compose file.
-# No Nginx is bundled here — configure your host reverse proxy to forward
-# FastCGI traffic to 127.0.0.1:9000 (the bound FPM port).
-#
-# Services:
-#   app        – PHP-FPM on 127.0.0.1:9000  (→ reverse proxy)
-#   worker     – Laravel queue worker
-#   scheduler  – Laravel task scheduler
-#   db         – PostgreSQL 15
-#   redis      – Redis 7
-#   minio      – MinIO S3-compatible object storage (API :9000, Console :9001)
-#   minio_init – One-shot bucket bootstrapper (exits after setup)
-#
-# Usage:
-#   docker compose --env-file .env up -d
+# Xplore Lanka - Production Docker Compose
 # =============================================================================
 
 services:
 
-  # ---------------------------------------------------------------------------
-  # app – PHP-FPM application server
-  # ---------------------------------------------------------------------------
+  # ===========================================================================
+  # Laravel Application
+  # PHP-FPM + internal HTTP server
+  # Exposes HTTP on container :8000
+  # ===========================================================================
+
   app:
     image: xplorelanka/app:${IMAGE_TAG:-latest}
+
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: xplorelanka_app
     restart: unless-stopped
-    user: www-data
+
     env_file:
       - .env
+
     environment:
-      APP_ENV:   "${APP_ENV:-production}"
+      APP_ENV: "${APP_ENV:-production}"
       APP_DEBUG: "${APP_DEBUG:-false}"
+
     ports:
-      # Bind only to loopback — reverse proxy connects here
-      - "127.0.0.1:${FPM_PORT:-9000}:9000"
+      - "127.0.0.1:8000:8000"
+
     volumes:
       - app_storage:/var/www/storage
+
     depends_on:
       db:
         condition: service_healthy
+
       redis:
         condition: service_healthy
+
       minio_init:
         condition: service_completed_successfully
+
     healthcheck:
-      test: ["CMD-SHELL", "php-fpm -t > /dev/null 2>&1"]
+      test:
+        [
+          "CMD-SHELL",
+          "php-fpm -t > /dev/null 2>&1"
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 20s
+
     networks:
       - xplorelanka
 
-  # ---------------------------------------------------------------------------
-  # worker – Laravel queue worker
-  # ---------------------------------------------------------------------------
+
+  # ===========================================================================
+  # Laravel Queue Worker
+  # ===========================================================================
+
   worker:
     image: xplorelanka/app:${IMAGE_TAG:-latest}
+
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: xplorelanka_worker
     restart: unless-stopped
+
     user: www-data
-    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=90 --max-time=3600
+
+    command:
+      - php
+      - artisan
+      - queue:work
+      - redis
+      - --sleep=3
+      - --tries=3
+      - --timeout=90
+      - --max-time=3600
+
     env_file:
       - .env
+
     volumes:
       - app_storage:/var/www/storage
+
     depends_on:
       app:
         condition: service_healthy
+
       db:
         condition: service_healthy
+
       redis:
         condition: service_healthy
+
       minio_init:
         condition: service_completed_successfully
+
     networks:
       - xplorelanka
 
-  # ---------------------------------------------------------------------------
-  # scheduler – Laravel task scheduler (runs every minute via artisan)
-  # ---------------------------------------------------------------------------
+
+  # ===========================================================================
+  # Laravel Scheduler
+  # ===========================================================================
+
   scheduler:
     image: xplorelanka/app:${IMAGE_TAG:-latest}
+
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: xplorelanka_scheduler
     restart: unless-stopped
+
     user: www-data
-    command: php artisan schedule:work
+
+    command:
+      - php
+      - artisan
+      - schedule:work
+
     env_file:
       - .env
+
     volumes:
       - app_storage:/var/www/storage
+
     depends_on:
       app:
         condition: service_healthy
+
       db:
         condition: service_healthy
+
       redis:
         condition: service_healthy
+
+      minio_init:
+        condition: service_completed_successfully
+
     networks:
       - xplorelanka
 
-  # ---------------------------------------------------------------------------
-  # db – PostgreSQL 15
-  # ---------------------------------------------------------------------------
+
+  # ===========================================================================
+  # PostgreSQL
+  # ===========================================================================
+
   db:
     image: postgres:15-alpine
+
     container_name: xplorelanka_db
     restart: unless-stopped
+
     environment:
-      POSTGRES_DB:       "${DB_DATABASE:-xplorelanka}"
-      POSTGRES_USER:     "${DB_USERNAME:-xplorelanka}"
+      POSTGRES_DB: "${DB_DATABASE:-xplorelanka}"
+      POSTGRES_USER: "${DB_USERNAME:-xplorelanka}"
       POSTGRES_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD must be set in .env}"
+
     volumes:
       - db_data:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-xplorelanka} -d ${DB_DATABASE:-xplorelanka}"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
+
     networks:
       - xplorelanka
 
-  # ---------------------------------------------------------------------------
-  # redis – Redis 7 (cache, sessions, queues)
-  # ---------------------------------------------------------------------------
+
+  # ===========================================================================
+  # Redis
+  # ===========================================================================
+
   redis:
     image: redis:7-alpine
+
     container_name: xplorelanka_redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+
     volumes:
       - redis_data:/data
+
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
+
     networks:
       - xplorelanka
 
-  # ---------------------------------------------------------------------------
-  # minio – S3-compatible object storage
-  # API endpoint : 127.0.0.1:9000  (set as AWS_ENDPOINT in .env)
-  # Admin console : 127.0.0.1:9001  (browser UI)
-  # ---------------------------------------------------------------------------
+
+  # ===========================================================================
+  # MinIO
+  # ===========================================================================
+
   minio:
     image: minio/minio:latest
+
     container_name: xplorelanka_minio
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+
+    command:
+      - server
+      - /data
+      - --console-address
+      - ":9001"
+
     environment:
-      MINIO_ROOT_USER:     "${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set in .env}"
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set in .env}"
       MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set in .env}"
+
     ports:
-      # Bind only to loopback — expose via reverse proxy if public CDN access is needed
-      - "127.0.0.1:${MINIO_PORT:-9002}:9000"   # S3 API  (host port 9002 avoids collision with PHP-FPM on 9000)
-      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"   # Web console
+      - "127.0.0.1:${MINIO_PORT:-9002}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+
     volumes:
       - minio_data:/data
+
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test:
+        [
+          "CMD",
+          "mc",
+          "ready",
+          "local"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 10s
+
     networks:
       - xplorelanka
 
-  # ---------------------------------------------------------------------------
-  # minio_init – one-shot bucket + policy bootstrapper
-  # Runs once, creates the bucket and sets public-read policy, then exits.
-  # Subsequent deploys are idempotent (mc mb --ignore-existing).
-  # ---------------------------------------------------------------------------
+
+  # ===========================================================================
+  # MinIO Bucket Initialization
+  # ===========================================================================
+
   minio_init:
     image: minio/minio:latest
+
     container_name: xplorelanka_minio_init
+
     restart: "no"
+
     depends_on:
       minio:
         condition: service_healthy
+
     environment:
-      MINIO_ROOT_USER:     "${MINIO_ROOT_USER}"
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
       MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
-      AWS_BUCKET:          "${AWS_BUCKET:-xplorelanka}"
-    entrypoint: >
-      /bin/sh -c "
-        mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
-        mc mb --ignore-existing local/$${AWS_BUCKET} &&
-        mc anonymous set download local/$${AWS_BUCKET} &&
-        echo 'MinIO bucket [$${AWS_BUCKET}] is ready with public-read access.'
-      "
+      AWS_BUCKET: "${AWS_BUCKET:-xplorelanka}"
+
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}" &&
+        mc mb --ignore-existing "local/$${AWS_BUCKET}" &&
+        mc anonymous set download "local/$${AWS_BUCKET}" &&
+        echo "MinIO bucket [$${AWS_BUCKET}] is ready."
+
     networks:
       - xplorelanka
+
+
+# =============================================================================
+# NETWORK
+# =============================================================================
 
 networks:
   xplorelanka:
     driver: bridge
+
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
 
 volumes:
   db_data:
