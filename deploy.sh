@@ -286,18 +286,17 @@ dc() {
 dc config --quiet
 
 dc build --pull app
-# Tag with the commit SHA so the image is immutable and traceable
-docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:${IMAGE_TAG}"
+# Tag as :latest alias for convenient local and compose operations
+docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:latest"
 
-# Copy the compiled Vite assets out of the image so the reverse proxy can
-# serve them directly from the host filesystem (better cache headers control
-# and avoids routing static files through PHP-FPM).
-log "Extracting compiled frontend assets to public/build/"
-BUILD_CONTAINER=$(docker create "${IMAGE_NAME}:${IMAGE_TAG}")
-mkdir -p "$APP_DIR/public/build"
-docker cp "${BUILD_CONTAINER}:/var/www/public/build/." "$APP_DIR/public/build/"
-docker rm "$BUILD_CONTAINER" > /dev/null
-ok "Image built and assets extracted"
+# Copy compiled Vite assets out of the image with correct host user ownership
+# and permissions so host reverse proxy (Nginx/Caddy) can serve them directly.
+log "Extracting compiled frontend assets to public/build/ with proper permissions"
+HOST_UID=$(id -u)
+HOST_GID=$(id -g)
+docker run --rm -u 0 -v "$APP_DIR:/host" --entrypoint sh "${IMAGE_NAME}:${IMAGE_TAG}" \
+    -c "rm -rf /host/public/build && mkdir -p /host/public/build && cp -r /var/www/public/build/. /host/public/build/ && chown -R ${HOST_UID}:${HOST_GID} /host/public/build && chmod -R u=rwX,go=rX /host/public/build"
+ok "Image built and frontend assets extracted with correct permissions"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PHASE 4 – Infrastructure services (PostgreSQL + Redis)
@@ -412,6 +411,11 @@ trap on_error ERR
 
 ROLLOUT_STARTED=true
 dc up -d --remove-orphans --force-recreate app worker scheduler
+
+log "Ensuring storage permissions on containers and host"
+dc exec -u 0 -T app chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+dc exec -u 0 -T app chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 
 log "Warming up Laravel caches on the running container"
 dc exec -T app php artisan optimize

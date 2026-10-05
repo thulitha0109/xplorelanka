@@ -184,7 +184,7 @@ services:
   # Subsequent deploys are idempotent (mc mb --ignore-existing).
   # ---------------------------------------------------------------------------
   minio_init:
-    image: minio/mc:latest
+    image: minio/minio:latest
     container_name: xplorelanka_minio_init
     restart: "no"
     depends_on:
