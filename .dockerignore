@@ -29,6 +29,13 @@ deploy.log
 .deploy-tag
 .proxy-configured
 
+# Development tooling
+Dockerfile.dev
+docker-compose.dev.yml
+entrypoint.dev.sh
+dev-build.sh
+init-minio.php
+
 # Editor / OS junk
 .DS_Store
 .idea

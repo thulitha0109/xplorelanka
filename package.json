@@ -7,7 +7,10 @@
         "dev": "vite",
         "dev:build": "./dev-build.sh",
         "dev:fresh": "./dev-build.sh --fresh",
-        "dev:watch": "./dev-build.sh --watch"
+        "dev:watch": "./dev-build.sh --watch",
+        "dev:up": "./dev-build.sh --up",
+        "dev:down": "./dev-build.sh --down",
+        "dev:test": "./dev-build.sh --test"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

@@ -66,4 +66,51 @@ Use a separate checkout and `.env`; set a different `COMPOSE_PROJECT_NAME`, `FPM
 
 ## Local development
 
-The root Compose stack is production-style and does not bind-mount application source into PHP. For local development use the PHP/Composer and Node toolchains from `composer.json` and `package.json` with local PostgreSQL and Redis. Do not use production secrets or volumes on a developer workstation.
+A dedicated local development Docker setup is available via `docker-compose.dev.yml` and `dev-build.sh`. It runs PHP 8.4 CLI, Node.js 22 LTS, Composer 2, PostgreSQL 15, Redis 7, and MinIO with source directories bind-mounted for instant live code reload without rebuilding images.
+
+### Quick Start
+
+1. Start all dev containers:
+   ```bash
+   ./dev-build.sh --up
+   # Or: docker compose -f docker-compose.dev.yml up -d
+   ```
+2. Build assets, run migrations, and seed data:
+   ```bash
+   ./dev-build.sh
+   ```
+3. Visit the local services:
+   - **Application**: [http://localhost:8000](http://localhost:8000)
+   - **MinIO Web Console**: [http://localhost:9001](http://localhost:9001) (User: `xplore_minio`, Password: `xplore_secret_key`)
+   - **MinIO S3 API**: [http://localhost:9000](http://localhost:9000)
+
+### Useful Development Commands
+
+- **Hot-reload Vite frontend**:
+  ```bash
+  ./dev-build.sh --watch
+  ```
+- **Run tests inside container**:
+  ```bash
+  ./dev-build.sh --test
+  ```
+- **Reset database with fresh seed**:
+  ```bash
+  ./dev-build.sh --fresh
+  ```
+- **Run Artisan commands**:
+  ```bash
+  ./dev-build.sh --artisan <command>
+  # Example: ./dev-build.sh --artisan route:list
+  ```
+- **Run Composer commands**:
+  ```bash
+  ./dev-build.sh --composer <command>
+  # Example: ./dev-build.sh --composer dump-autoload
+  ```
+- **Stop dev containers**:
+  ```bash
+  ./dev-build.sh --down
+  # Or: docker compose -f docker-compose.dev.yml down
+  ```
+

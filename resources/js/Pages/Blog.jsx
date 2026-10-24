@@ -19,8 +19,19 @@ export default function Blog({ posts = [], categories = [], currentCategory = 'a
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
             <SeoHead
                 title="Sri Lanka Travel Guides, Culture & Outdoor Stories | Xplore Lanka"
-                description="Read local Sri Lanka destination guides, Kandy culture stories, wildlife conservation articles and practical tips from Xplore Lanka."
-                schema={{ '@context': 'https://schema.org', '@type': 'Blog', name: 'Xplore Lanka Travel Journal', description: 'Sri Lanka travel guides, culture and outdoor stories.', publisher: { '@id': 'https://xplorelanka.com/#organization' } }}
+                description="Expert Sri Lanka travel guides written by local tour planners: Kandy heritage trails, Horton Plains hiking tips, wildlife conservation, tea plantation journeys, and travel tips."
+                keywords="Sri Lanka travel blog, Sri Lanka travel tips, Kandy guide, Horton plains guide, things to do in Sri Lanka, Sri Lanka safari tips, Ella scenic train"
+                breadcrumbs={[
+                    { name: 'Home', url: '/' },
+                    { name: 'Travel Blog', url: '/blog' }
+                ]}
+                schema={{
+                    '@context': 'https://schema.org',
+                    '@type': 'Blog',
+                    name: 'Xplore Lanka Travel Journal',
+                    description: 'Sri Lanka travel guides, culture, and outdoor stories from certified local specialists.',
+                    publisher: { '@id': 'https://xplorelanka.com/#organization' }
+                }}
             />
             <Navbar currentPath="/blog" />
 

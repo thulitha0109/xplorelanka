@@ -9,11 +9,11 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
                     {/* Brand Column */}
                     <div>
-                        <div className="inline-flex rounded-xl bg-white px-3 py-2 mb-4">
+                        <div className="inline-flex items-center rounded-xl bg-white mb-4">
                             <img
                                 src="/images/legacy/logo.png"
                                 alt="Xplore Lanka"
-                                className="h-14 w-auto max-w-[220px] object-contain object-left"
+                                className="h-12 w-auto max-w-[200px] object-contain object-left"
                             />
                         </div>
                         <p className="text-slate-600 text-sm leading-relaxed mb-6">
@@ -82,7 +82,7 @@ export default function Footer() {
                 </div>
 
                 <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
-                    <p>© {new Date().getFullYear()} Xplor Lanka. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} Xplore Lanka. All rights reserved.</p>
                     <div className="flex items-center space-x-2 mt-4 md:mt-0 text-slate-600">
                         <span className="text-[11px] text-slate-500">Developed by</span>
                         <a 

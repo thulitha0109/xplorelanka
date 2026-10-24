@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Star, MessageSquare, ChevronLeft, ChevronRight, PenLine, Play, X, ExternalLink, ShieldCheck } from 'lucide-react';
+import ElfsightReviews from './ElfsightReviews';
 
 function GoogleIcon({ className = "w-4 h-4" }) {
     return (
@@ -261,41 +262,9 @@ export default function ReviewSection({ reviews = [], tourId = null, avgRating =
                 </div>
             </div>
 
-            {/* Reviews Carousel */}
-            <div className="relative group/carousel">
-                {canScrollLeft && (
-                    <button
-                        onClick={() => scroll(-1)}
-                        className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-800 hover:bg-slate-50 transition-all"
-                        aria-label="Previous Reviews"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                )}
-                
-                <div 
-                    ref={scrollRef}
-                    className="flex space-x-6 overflow-x-auto pb-4 pt-1 px-1 scroll-smooth scrollbar-none"
-                >
-                    {reviews.map((review) => (
-                        <ReviewCard key={review.id} review={review} onOpenMedia={(url) => setSelectedMedia(url)} />
-                    ))}
-                    {reviews.length === 0 && (
-                        <div className="p-8 text-center text-slate-500 w-full bg-white rounded-3xl border border-slate-200">
-                            Be the first to share your experience with Xplor Lanka!
-                        </div>
-                    )}
-                </div>
-
-                {canScrollRight && reviews.length > 2 && (
-                    <button
-                        onClick={() => scroll(1)}
-                        className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-800 hover:bg-slate-50 transition-all"
-                        aria-label="Next Reviews"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                )}
+            {/* Elfsight All-in-One Reviews Widget */}
+            <div className="pt-2">
+                <ElfsightReviews />
             </div>
 
             {/* Media Lightbox */}

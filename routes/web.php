@@ -10,6 +10,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PlannerController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\VehicleController;
 use App\Models\Accommodation;
@@ -68,12 +69,15 @@ Route::get('/', function () {
     $accommodations = Accommodation::with(['partner', 'catalogPrices'])->where('is_available', true)->take(3)->get();
     $vehicles       = Vehicle::with(['partner', 'catalogPrices'])->where('is_available', true)->get();
     $reviews        = Review::with(['tour', 'accommodation', 'vehicle'])->where('is_approved', true)->latest()->take(8)->get();
+    $blogPosts      = BlogPost::where('is_published', true)->orderByDesc('published_at')->take(4)
+                        ->get(['id', 'title', 'slug', 'category', 'image', 'excerpt', 'published_at', 'reading_time_min']);
 
     return Inertia::render('Home', [
         'featuredTours'  => $featuredTours,
         'accommodations' => $accommodations,
         'vehicles'       => $vehicles,
         'reviews'        => $reviews,
+        'blogPosts'      => $blogPosts,
     ]);
 })->name('home');
 
@@ -112,9 +116,10 @@ Route::get('/partner', function () {
 Route::get('/blog',        [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
-// Informational
-Route::get('/about',   function () { return Inertia::render('About'); })->name('about');
-Route::get('/contact', function () { return Inertia::render('Contact'); })->name('contact');
+// Informational & SEO
+Route::get('/about',       function () { return Inertia::render('About'); })->name('about');
+Route::get('/contact',     function () { return Inertia::render('Contact'); })->name('contact');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 // ── Public Form Submissions ────────────────────────────────────────────────────
 Route::post('/currency-preference', [CurrencyController::class, 'update'])->name('currency.update');

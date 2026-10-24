@@ -27,8 +27,28 @@ export default function Accommodations({ accommodations = [], partners = [], cur
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
             <SeoHead
                 title="Sri Lanka Eco Lodges, Cabins & Boutique Stays | Xplore Lanka"
-                description="Explore handpicked eco lodges, cabins and boutique stays across Sri Lanka, with locally curated accommodation options from Xplore Lanka."
-                schema={{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Sri Lanka Accommodations', description: 'Curated lodges and boutique stays in Sri Lanka.' }}
+                description="Discover handpicked eco retreats, mountain cabins, glamping tents and heritage tea bungalows across Sri Lanka. Verified boutique hospitality connected with Xplore Lanka."
+                keywords="Sri Lanka eco lodges, eco cabins Sri Lanka, glamping Ella Sri Lanka, boutique hotels Kandy, heritage tea bungalows Nuwara Eliya, Prince Place cabins, nature retreat Sri Lanka"
+                breadcrumbs={[
+                    { name: 'Home', url: '/' },
+                    { name: 'Accommodations', url: '/accommodations' }
+                ]}
+                schema={{
+                    '@context': 'https://schema.org',
+                    '@type': 'CollectionPage',
+                    name: 'Sri Lanka Eco Lodges, Cabins & Boutique Stays',
+                    description: 'Curated eco retreats, safari glamping, and heritage tea bungalows across Sri Lanka.',
+                    provider: { '@id': 'https://xplorelanka.com/#organization' },
+                    mainEntity: {
+                        '@type': 'ItemList',
+                        itemListElement: accommodations.slice(0, 20).map((acc, index) => ({
+                            '@type': 'ListItem',
+                            position: index + 1,
+                            name: acc.name,
+                            url: `https://xplorelanka.com/accommodations/${acc.id}`
+                        }))
+                    }
+                }}
             />
             <Navbar currentPath="/accommodations" />
 
@@ -129,13 +149,15 @@ export default function Accommodations({ accommodations = [], partners = [], cur
                                     </div>
                                 </div>
                                 <a
-                                    href={`https://wa.me/94763762763?text=Hi%20Xplor%20Lanka,%20I'm%20inquiring%20about%20staying%20at%20${encodeURIComponent(acc.name)}`}
+                                    href={`https://wa.me/94763762763?text=${encodeURIComponent(
+                                        `Hi Xplore Lanka! I'd like to book a stay at "${acc.name}" in ${acc.location}. Could you share rates and availability?`
+                                    )}`}
                                     target="_blank"
-                                    rel="noreferrer"
-                                    className="px-4 py-2 bg-slate-900 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center space-x-1.5"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center space-x-1.5 hover:-translate-y-0.5"
                                 >
                                     <MessageCircle className="w-3.5 h-3.5" />
-                                    <span>Book Stay</span>
+                                    <span>Book on WhatsApp</span>
                                 </a>
                             </div>
                         </div>

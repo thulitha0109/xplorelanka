@@ -1,0 +1,156 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: xplorelanka-app:latest
+    container_name: xplorelanka_dev_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - ./:/var/www
+    env_file:
+      - .env
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_HOST: db
+      REDIS_HOST: redis
+      AWS_ENDPOINT: http://minio:9000
+      MINIO_ENDPOINT: http://minio:9000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - xplorelanka_dev
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: xplorelanka-app:latest
+    container_name: xplorelanka_dev_worker
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:listen", "--tries=1", "--timeout=0"]
+    volumes:
+      - ./:/var/www
+    env_file:
+      - .env
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_HOST: db
+      REDIS_HOST: redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka_dev
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: xplorelanka-app:latest
+    container_name: xplorelanka_dev_scheduler
+    restart: unless-stopped
+    command: ["php", "artisan", "schedule:work"]
+    volumes:
+      - ./:/var/www
+    env_file:
+      - .env
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_HOST: db
+      REDIS_HOST: redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - xplorelanka_dev
+
+  db:
+    image: postgres:15-alpine
+    container_name: xplorelanka_dev_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-xplorelanka}
+      POSTGRES_USER: ${DB_USERNAME:-xplorelanka}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - xplorelanka_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - xplorelanka_dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: xplorelanka_dev_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - xplorelanka_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - xplorelanka_dev
+
+  minio:
+    image: minio/minio:latest
+    container_name: xplorelanka_dev_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-xplore_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-xplore_secret_key}
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - xplorelanka_minio_data:/data
+    networks:
+      - xplorelanka_dev
+
+networks:
+  xplorelanka_dev:
+    driver: bridge
+
+volumes:
+  xplorelanka_db_data:
+    name: ${COMPOSE_PROJECT_NAME:-xplorelanka}_xplorelanka_db_data
+  xplorelanka_redis_data:
+    name: ${COMPOSE_PROJECT_NAME:-xplorelanka}_xplorelanka_redis_data
+  xplorelanka_minio_data:
+    name: ${COMPOSE_PROJECT_NAME:-xplorelanka}_xplorelanka_minio_data

@@ -1,0 +1,83 @@
+FROM php:8.4-cli-bookworm
+
+ARG UID=1000
+ARG GID=1000
+
+# Install system dependencies & libraries for extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    unzip \
+    zip \
+    libpq-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    libicu-dev \
+    libonig-dev \
+    postgresql-client \
+    gosu \
+    $PHPIZE_DEPS \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo \
+        pdo_pgsql \
+        pgsql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        intl \
+        opcache \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apt-get purge -y --auto-remove $PHPIZE_DEPS \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer 2
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Install Node.js 22 LTS and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Development PHP configuration
+RUN printf '%s\n' \
+    '[PHP]' \
+    'memory_limit = 512M' \
+    'max_execution_time = 300' \
+    'upload_max_filesize = 64M' \
+    'post_max_size = 64M' \
+    'display_errors = On' \
+    'display_startup_errors = On' \
+    'error_reporting = E_ALL' \
+    'log_errors = On' \
+    'error_log = /proc/self/fd/2' \
+    '[Date]' \
+    'date.timezone = UTC' \
+    '[opcache]' \
+    'opcache.enable = 1' \
+    'opcache.enable_cli = 1' \
+    'opcache.revalidate_freq = 0' \
+    'opcache.validate_timestamps = 1' \
+    > /usr/local/etc/php/conf.d/99-dev.ini
+
+# Create non-root devuser matching host UID:GID
+RUN (groupadd -g ${GID} devuser 2>/dev/null || groupadd devuser 2>/dev/null || true) \
+    && (useradd -u ${UID} -g ${GID} -m -s /bin/bash devuser 2>/dev/null || useradd -m -s /bin/bash devuser 2>/dev/null || true) \
+    && mkdir -p /var/www \
+    && chown -R ${UID}:${GID} /var/www /home/devuser
+
+WORKDIR /var/www
+
+COPY entrypoint.dev.sh /usr/local/bin/entrypoint.dev.sh
+RUN chmod +x /usr/local/bin/entrypoint.dev.sh
+
+USER devuser
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.dev.sh"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

@@ -114,7 +114,7 @@ export default function GoogleMap({
     }, [safeLocations, zoom]);
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-md">
+        <div className="h-full flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-md">
             <div className="p-4 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
                 <div className="flex items-center space-x-2 font-bold text-slate-900 dark:text-white">
                     <Navigation className="w-4 h-4 text-amber-500" />
@@ -124,7 +124,7 @@ export default function GoogleMap({
             </div>
 
             {/* Container Map View */}
-            <div className="relative h-80 w-full bg-slate-950">
+            <div className="relative flex-1 min-h-80 w-full bg-slate-950">
                 <div ref={mapRef} className="w-full h-full" />
 
                 {/* Visual Fallback / Interactive Waypoint Overlay */}

@@ -7,7 +7,7 @@ import SeoHead from '../Components/SeoHead';
 import { 
     Car, ShieldCheck, CheckCircle2, MessageCircle, Star, 
     Luggage, Users, Fuel, Gauge, PenLine, Sparkles, Navigation,
-    Bus, Compass, Zap, ArrowRight, Shield, Clock, Award
+    Bus, Compass, Zap, ArrowRight, Shield, Clock, Award, ChevronRight
 } from 'lucide-react';
 
 export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPartners = [], currentCategory = 'all' }) {
@@ -83,9 +83,28 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
             <SeoHead
-                title="Sri Lanka Private Transfers & Chauffeur Hire | Xplore Lanka"
-                description="Request a private Sri Lanka airport transfer or chauffeur-driven trip with Xplore Lanka. Compare local vehicle options and submit an itinerary inquiry."
-                schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'Sri Lanka Private Transfers and Chauffeur Hire', serviceType: 'Private transport and airport transfers', provider: { '@id': 'https://xplorelanka.com/#organization' }, areaServed: { '@type': 'Country', name: 'Sri Lanka' } }}
+                title="Private Driver Sri Lanka & Chauffeur Fleet | Airport Transfers | Xplore Lanka"
+                description="Hire licensed English-speaking drivers and tourist vehicles across Sri Lanka. Air-conditioned sedans, KDH vans, luxury SUVs and 4x4 safari jeeps with 24/7 support and 5.0★ Google rating."
+                keywords="private driver Sri Lanka, airport transfers Sri Lanka, chauffeur hire Sri Lanka, Colombo to Sigiriya transfer, Kandy to Ella taxi, KDH van hire Sri Lanka, tourist driver Sri Lanka, safe driver Sri Lanka"
+                breadcrumbs={[
+                    { name: 'Home', url: '/' },
+                    { name: 'Vehicles & Transfers', url: '/vehicles' }
+                ]}
+                schema={{
+                    '@context': 'https://schema.org',
+                    '@type': ['TaxiService', 'AutoRental', 'Service'],
+                    name: 'Sri Lanka Private Driver & Chauffeur Transfer Fleet',
+                    serviceType: 'Private Chauffeur, Tourist Fleet Hire & Airport Transfers',
+                    provider: { '@id': 'https://xplorelanka.com/#organization' },
+                    areaServed: { '@type': 'Country', name: 'Sri Lanka' },
+                    aggregateRating: {
+                        '@type': 'AggregateRating',
+                        ratingValue: '5.0',
+                        reviewCount: 39,
+                        bestRating: '5',
+                        worstRating: '1'
+                    }
+                }}
             />
             <Navbar currentPath="/vehicles" />
 
@@ -340,99 +359,131 @@ export default function Vehicles({ vehicles = [], vehicleReviews = [], fleetPart
 
                     {/* Booking / Inquiry Sidebar Form */}
                     <div className="lg:col-span-4">
-                        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-lg sticky top-24 space-y-5">
-                            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                        <div className="bg-white rounded-3xl border border-slate-200 shadow-lg sticky top-24 overflow-hidden">
+                            <div className="overflow-hidden">
                                 <img
                                     src={currentVehicleObj.image || '/images/legacy/vehicle-default.jpg'}
                                     alt={currentVehicleObj.name || 'Vehicle'}
                                     className="w-full h-52 object-cover"
                                 />
                             </div>
-                            <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Fast Confirmation</span>
-                                <h3 className="text-xl font-black text-slate-900 mt-1">Book Chauffeur Transfer</h3>
-                                <p className="text-xs text-slate-500">We confirm within 15 minutes via WhatsApp.</p>
-                            </div>
 
-                            <form onSubmit={handleFormSubmit} className="space-y-4 text-xs sm:text-sm">
+                            <div className="p-6 sm:p-8 space-y-5">
                                 <div>
-                                    <label className="block font-bold text-slate-700 mb-1">Your Name</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={data.customer_name}
-                                        onChange={(e) => setData('customer_name', e.target.value)}
-                                        placeholder="e.g. John Doe"
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50"
-                                    />
+                                    <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Direct Booking</span>
+                                    <h3 className="text-xl font-black text-slate-900 mt-1">Book Chauffeur Transfer</h3>
+                                    <p className="text-xs text-slate-500">Contact our team to check vehicle availability and rates.</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block font-bold text-slate-700 mb-1">Email</label>
-                                        <input
-                                            type="email"
-                                            required
-                                            value={data.customer_email}
-                                            onChange={(e) => setData('customer_email', e.target.value)}
-                                            placeholder="john@example.com"
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50"
-                                        />
+                                {/* ── WhatsApp contact (No form needed) ── */}
+                                <a
+                                    href={`https://wa.me/94763762763?text=${encodeURIComponent(
+                                        `Hi Xplore Lanka! I'd like to book a private vehicle transfer. Could you share availability and rates?`
+                                    )}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group w-full flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5"
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                                            <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="text-sm font-extrabold">Chat on WhatsApp</div>
+                                            <div className="text-[10px] text-white/80 font-medium">Message our team directly</div>
+                                        </div>
                                     </div>
+                                    <ChevronRight className="w-4 h-4 text-white/60 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                                </a>
+
+                                {/* ── Divider ── */}
+                                <div className="flex items-center space-x-3">
+                                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">or fill the form</span>
+                                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+                                </div>
+
+                                {/* ── Booking Form ── */}
+                                <form onSubmit={handleFormSubmit} className="space-y-3 text-xs sm:text-sm">
                                     <div>
-                                        <label className="block font-bold text-slate-700 mb-1">WhatsApp</label>
+                                        <label className="block font-bold text-slate-700 mb-1 text-[11px] uppercase tracking-wide">Your Name</label>
                                         <input
                                             type="text"
                                             required
-                                            value={data.customer_phone}
-                                            onChange={(e) => setData('customer_phone', e.target.value)}
-                                            placeholder="+94 77 123 4567"
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50"
+                                            value={data.customer_name}
+                                            onChange={(e) => setData('customer_name', e.target.value)}
+                                            placeholder="e.g. John Doe"
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
                                         />
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block font-bold text-slate-700 mb-1">Pickup Location</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={data.pickup_location}
-                                        onChange={(e) => setData('pickup_location', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50"
-                                    />
-                                </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block font-bold text-slate-700 mb-1 text-[11px] uppercase tracking-wide">Email</label>
+                                            <input
+                                                type="email"
+                                                required
+                                                value={data.customer_email}
+                                                onChange={(e) => setData('customer_email', e.target.value)}
+                                                placeholder="john@example.com"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block font-bold text-slate-700 mb-1 text-[11px] uppercase tracking-wide">WhatsApp</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={data.customer_phone}
+                                                onChange={(e) => setData('customer_phone', e.target.value)}
+                                                placeholder="+94 77 123 4567"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                                            />
+                                        </div>
+                                    </div>
 
-                                <div>
-                                    <label className="block font-bold text-slate-700 mb-1">Dropoff / Destination</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={data.dropoff_location}
-                                        onChange={(e) => setData('dropoff_location', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50"
-                                    />
-                                </div>
+                                    <div>
+                                        <label className="block font-bold text-slate-700 mb-1 text-[11px] uppercase tracking-wide">Pickup Location</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={data.pickup_location}
+                                            onChange={(e) => setData('pickup_location', e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                                        />
+                                    </div>
 
-                                <div>
-                                    <label className="block font-bold text-slate-700 mb-1">Travel Date</label>
-                                    <input
-                                        type="date"
-                                        value={data.start_date}
-                                        onChange={(e) => setData('start_date', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50"
-                                    />
-                                </div>
+                                    <div>
+                                        <label className="block font-bold text-slate-700 mb-1 text-[11px] uppercase tracking-wide">Dropoff / Destination</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={data.dropoff_location}
+                                            onChange={(e) => setData('dropoff_location', e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                                        />
+                                    </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 font-black text-slate-950 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2"
-                                >
-                                    <MessageCircle className="w-4 h-4" />
-                                    <span>Inquire on WhatsApp</span>
-                                </button>
-                            </form>
+                                    <div>
+                                        <label className="block font-bold text-slate-700 mb-1 text-[11px] uppercase tracking-wide">Travel Date</label>
+                                        <input
+                                            type="date"
+                                            value={data.start_date}
+                                            onChange={(e) => setData('start_date', e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 font-black text-slate-950 rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center space-x-2 hover:-translate-y-0.5"
+                                    >
+                                        <MessageCircle className="w-4 h-4" />
+                                        <span>{processing ? 'Sending...' : 'Submit Inquiry'}</span>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

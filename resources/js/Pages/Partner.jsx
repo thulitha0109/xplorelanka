@@ -27,9 +27,19 @@ export default function Partner() {
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans">
             <SeoHead
-                title="Partner with Xplore Lanka | Sri Lanka Tourism Network"
-                description="Join Xplore Lanka’s local travel network as a Sri Lankan driver, guide, accommodation host or activity provider. Submit a partner application."
-                schema={{ '@context': 'https://schema.org', '@type': 'WebPage', name: 'Become an Xplore Lanka Partner', about: { '@id': 'https://xplorelanka.com/#organization' } }}
+                title="Partner with Xplore Lanka | Join Sri Lanka's Local Tourism Network"
+                description="Become an Xplore Lanka partner: list your tourist vehicle, eco lodge, or guide services on a 5.0-rated platform reaching international travelers. Apply now."
+                keywords="partner Xplore Lanka, list tourism business Sri Lanka, become tour driver Sri Lanka, eco lodge listing, travel partner Sri Lanka"
+                breadcrumbs={[
+                    { name: 'Home', url: '/' },
+                    { name: 'Partner', url: '/partner' }
+                ]}
+                schema={{
+                    '@context': 'https://schema.org',
+                    '@type': 'WebPage',
+                    name: 'Become an Xplore Lanka Partner',
+                    about: { '@id': 'https://xplorelanka.com/#organization' }
+                }}
             />
             <Navbar currentPath="/partner" />
 

@@ -130,9 +130,29 @@ export default function Tours({ tours = [], currentCategory = 'all' }) {
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
             <SeoHead
-                title="Sri Lanka Tour Packages & Private Day Trips | Xplore Lanka"
-                description="Browse custom Sri Lanka tour packages, Kandy day tours, cultural heritage visits, cycling adventures and private transfers from a Kandy-based local team."
-                schema={{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Sri Lanka Tours', description: 'Tour packages, day trips and cycling experiences across Sri Lanka.', mainEntity: { '@type': 'ItemList', itemListElement: tours.slice(0, 20).map((tour, index) => ({ '@type': 'ListItem', position: index + 1, name: tour.title, url: `https://xplorelanka.com/tours/${tour.id}` })) } }}
+                title="Sri Lanka Tour Packages & Private Guided Itineraries | Xplore Lanka"
+                description="Explore top-rated Sri Lanka tour packages: 15-day island journeys, Kandy city day trips, Sigiriya cultural tours, and tea trail cycling adventures with English-speaking chauffeur guides."
+                keywords="Sri Lanka tour packages, private Sri Lanka tour, Kandy city tour, Sigiriya day trip, tea plantation tour Sri Lanka, Sri Lanka round trips, Kandy tour operator, cultural triangle tours"
+                breadcrumbs={[
+                    { name: 'Home', url: '/' },
+                    { name: 'Tours', url: '/tours' }
+                ]}
+                schema={{
+                    '@context': 'https://schema.org',
+                    '@type': 'CollectionPage',
+                    name: 'Sri Lanka Tour Packages & Day Trips',
+                    description: 'Handcrafted private tours, day trips, and cycling experiences across Sri Lanka.',
+                    provider: { '@id': 'https://xplorelanka.com/#organization' },
+                    mainEntity: {
+                        '@type': 'ItemList',
+                        itemListElement: tours.slice(0, 20).map((tour, index) => ({
+                            '@type': 'ListItem',
+                            position: index + 1,
+                            name: tour.title,
+                            url: `https://xplorelanka.com/tours/${tour.id}`
+                        }))
+                    }
+                }}
             />
             <Navbar currentPath="/tours" />
 

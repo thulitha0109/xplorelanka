@@ -27,8 +27,9 @@ export default function ForgotPassword() {
 
             <div className="relative w-full max-w-md space-y-6">
                 <div className="text-center space-y-2">
-                    <Link href="/" className="inline-flex items-center justify-center rounded-2xl bg-white/80 px-5 py-3 shadow-sm ring-1 ring-slate-200/80 transition hover:shadow-md">
-                        <img src="/images/legacy/logo.png" alt="Xplore Lanka" className="h-14 w-auto max-w-[240px] object-contain" />
+                    <Link href="/" className="inline-flex items-center justify-center gap-3 rounded-2xl bg-white/90 px-5 py-3 shadow-sm ring-1 ring-slate-200/80 transition hover:shadow-md">
+                        <img src="/x_plore_lanka_favicons/android-chrome-192x192.png" alt="Xplore Lanka Icon" className="h-10 w-10 rounded-xl object-contain shadow-sm" />
+                        <img src="/images/legacy/logo.png" alt="Xplore Lanka" className="h-10 w-auto max-w-[200px] object-contain" />
                     </Link>
                     <p className="text-slate-600 text-sm">Reset your password</p>
                 </div>

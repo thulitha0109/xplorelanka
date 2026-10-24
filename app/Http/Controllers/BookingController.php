@@ -16,7 +16,7 @@ class BookingController extends Controller
             'type' => 'nullable|string',
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
-            'customer_phone' => 'required|string|max:50',
+            'customer_phone' => 'nullable|string|max:50',
             'country' => 'nullable|string|max:100',
             'country_code' => 'nullable|string|size:2',
             'tour_id' => 'nullable|exists:tours,id',
@@ -28,6 +28,10 @@ class BookingController extends Controller
             'vehicle_type' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
+
+        if (empty($validated['customer_phone'])) {
+            $validated['customer_phone'] = 'N/A (Email preferred)';
+        }
 
         $currency = app(CurrencyPreferenceService::class)->defaultCurrency($request);
         $tourPrice = null;
@@ -61,11 +65,12 @@ class BookingController extends Controller
 
         $booking = Booking::create($validated);
 
-        // Generate WhatsApp direct link for seamless inquiry
-        $message = "Hello Xplor Lanka! I would like to inquire about booking details:\n"
+        // Generate WhatsApp direct link to company number for seamless inquiry
+        $message = "Hello Xplore Lanka! I would like to inquire about booking details:\n"
             . "Ref: " . $booking->reference_no . "\n"
             . "Name: " . $booking->customer_name . "\n"
-            . "Phone: " . $booking->customer_phone . "\n"
+            . "Email: " . $booking->customer_email . "\n"
+            . "Phone: " . ($booking->customer_phone ?: 'N/A') . "\n"
             . "Guests: " . ($booking->guests_count ?? 1) . "\n"
             . "Notes: " . ($booking->notes ?? 'N/A');
 

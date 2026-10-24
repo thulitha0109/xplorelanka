@@ -8,3 +8,51 @@
 @theme {
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
+
+/* ── Comprehensive Elfsight Debranding & Watermark Removal ── */
+a[href*="elfsight.com"],
+a[href*="elfsight"],
+[class*="Badge"],
+[class*="badge"],
+[class*="Badge__"],
+[class*="badge__"],
+[class*="BadgeContainer"],
+[class*="BadgeComponent"],
+[class*="eapps-link"],
+[class*="eapps-badge"],
+[class*="eapps-watermark"],
+[class*="watermark"],
+[class*="Watermark"],
+[class*="Ribbon"],
+[class*="ribbon"],
+[class*="WidgetToolbar"],
+[class*="widget-toolbar"],
+[class*="CloseButton"],
+[class*="close-button"],
+[class*="Floating"],
+[class*="floating"],
+.elfsight-app-21ad5328-89e0-432c-89b4-9307f7301e81 a[target="_blank"],
+.elfsight-app-21ad5328-89e0-432c-89b4-9307f7301e81 a[href*="elfsight"],
+div[class*="elfsight-app"] > div > a,
+div[class*="elfsight-app"] [class*="Badge"],
+div[class*="elfsight-app"] [class*="badge"],
+div[class*="elfsight-app"] [class*="Ribbon"],
+div[class*="elfsight-app"] [class*="ribbon"],
+div[style*="z-index: 9999999"],
+div[style*="z-index:9999999"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    max-height: 0 !important;
+    max-width: 0 !important;
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+}
+

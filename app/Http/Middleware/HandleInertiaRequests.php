@@ -54,9 +54,18 @@ class HandleInertiaRequests extends Middleware
             'appName' => config('app.name'),
             'site' => [
                 'name' => config('seo.name'),
+                'short_name' => config('seo.short_name'),
                 'url' => config('seo.url'),
                 'description' => config('seo.description'),
+                'keywords' => config('seo.keywords'),
                 'logo' => config('seo.logo'),
+                'phone' => config('seo.phone'),
+                'display_phone' => config('seo.display_phone'),
+                'whatsapp' => config('seo.whatsapp'),
+                'email' => config('seo.email'),
+                'google_maps_url' => config('seo.google_maps_url'),
+                'rating_value' => config('seo.rating_value'),
+                'review_count' => config('seo.review_count'),
             ],
             'currency' => [
                 'code' => app(CurrencyPreferenceService::class)->defaultCurrency($request),
